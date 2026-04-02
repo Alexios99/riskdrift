@@ -24,6 +24,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.analysis.event_annotator import MACRO_EVENTS, annotate_drift_chart
 from src.analysis.sector_aggregator import add_sector, sector_drift_heatmap
 from src.pipeline.drift_scorer import score_all
 
@@ -131,6 +132,18 @@ def main() -> None:
         z_threshold = st.slider("Drift flag threshold (z-score)", -4.0, -1.0, -2.0, 0.1)
 
         st.divider()
+        with st.expander("Event Calendar"):
+            st.caption("Known macro events used for drift annotation")
+            event_rows = [
+                {"Year": f"{yr:.1f}", "Event": desc}
+                for yr, desc in sorted(MACRO_EVENTS.items())
+            ]
+            st.dataframe(
+                pd.DataFrame(event_rows),
+                use_container_width=True,
+                hide_index=True,
+            )
+
         st.caption("Data: SEC EDGAR public API · Model: ProsusAI/finbert · MIT License")
 
     filtered = scores[scores["sector"].isin(selected_sectors)]
@@ -208,6 +221,15 @@ def main() -> None:
                 legend={"orientation": "h"},
                 height=400,
             )
+
+            # Annotate with macro and sector events
+            ticker_sector = (
+                ticker_df["sector"].iloc[0]
+                if "sector" in ticker_df.columns and not ticker_df.empty
+                else None
+            )
+            annotate_drift_chart(fig, ticker_df["year"].tolist(), sector=ticker_sector)
+
             st.plotly_chart(fig, use_container_width=True)
 
             st.subheader("Z-Score Timeline")
