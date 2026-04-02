@@ -1,0 +1,81 @@
+ticker,year,cosine_similarity,rolling_mean,rolling_std,z_score,drift_flag,insufficient_history,sector
+AAPL,2016,0.9412,,,, True,Information Technology
+AAPL,2017,0.9287,,,, True,Information Technology
+AAPL,2018,0.9341,,,, True,Information Technology
+AAPL,2019,0.9198,0.9347,0.0063,-2.37, True, False,Information Technology
+AAPL,2020,0.8912,0.9310,0.0072,-5.53, True, False,Information Technology
+AAPL,2021,0.9445,0.9230,0.0201,1.07, False, False,Information Technology
+AAPL,2022,0.9387,0.9266,0.0190,0.64, False, False,Information Technology
+AAPL,2023,0.9312,0.9283,0.0183,0.16, False, False,Information Technology
+MSFT,2016,0.9521,,,, True,Information Technology
+MSFT,2017,0.9489,,,, True,Information Technology
+MSFT,2018,0.9456,,,, True,Information Technology
+MSFT,2019,0.9512,0.9489,0.0033,0.70, False, False,Information Technology
+MSFT,2020,0.9478,0.9495,0.0030,-0.57, False, False,Information Technology
+MSFT,2021,0.9501,0.9491,0.0028,0.36, False, False,Information Technology
+MSFT,2022,0.9443,0.9493,0.0028,-1.79, False, False,Information Technology
+MSFT,2023,0.9389,0.9486,0.0031,-3.15, True, False,Information Technology
+JPM,2016,0.9312,,,, True,Financials
+JPM,2017,0.9278,,,, True,Financials
+JPM,2018,0.9241,,,, True,Financials
+JPM,2019,0.9198,0.9277,0.0036,-2.19, True, False,Financials
+JPM,2020,0.8934,0.9257,0.0045,-7.18, True, False,Financials
+JPM,2021,0.9301,0.9193,0.0139,0.78, False, False,Financials
+JPM,2022,0.9278,0.9223,0.0130,0.42, False, False,Financials
+JPM,2023,0.9247,0.9220,0.0128,0.21, False, False,Financials
+XOM,2016,0.9187,,,, True,Energy
+XOM,2017,0.9234,,,, True,Energy
+XOM,2018,0.9178,,,, True,Energy
+XOM,2019,0.9201,0.9200,0.0028,0.04, False, False,Energy
+XOM,2020,0.8712,0.9200,0.0025,-19.52, True, False,Energy
+XOM,2021,0.9156,0.9102,0.0185,0.29, False, False,Energy
+XOM,2022,0.9223,0.9124,0.0175,0.57, False, False,Energy
+XOM,2023,0.9198,0.9136,0.0168,0.37, False, False,Energy
+JNJ,2016,0.9456,,,, True,Health Care
+JNJ,2017,0.9423,,,, True,Health Care
+JNJ,2018,0.9398,,,, True,Health Care
+JNJ,2019,0.9367,0.9426,0.0030,-1.97, False, False,Health Care
+JNJ,2020,0.9312,0.9411,0.0039,-2.54, True, False,Health Care
+JNJ,2021,0.9389,0.9391,0.0054,-0.04, False, False,Health Care
+JNJ,2022,0.9312,0.9391,0.0050,-1.58, False, False,Health Care
+JNJ,2023,0.9278,0.9382,0.0056,-1.86, False, False,Health Care
+BA,2016,0.9523,,,, True,Industrials
+BA,2017,0.9489,,,, True,Industrials
+BA,2018,0.9512,,,, True,Industrials
+BA,2019,0.7823,0.9508,0.0018,-93.61, True, False,Industrials
+BA,2020,0.8934,0.9337,0.0745,-0.54, False, False,Industrials
+BA,2021,0.9156,0.9256,0.0712,-0.14, False, False,Industrials
+BA,2022,0.9287,0.9240,0.0674,0.07, False, False,Industrials
+BA,2023,0.9198,0.9228,0.0648,-0.05, False, False,Industrials
+GE,2016,0.9234,,,, True,Industrials
+GE,2017,0.9178,,,, True,Industrials
+GE,2018,0.8923,,,, True,Industrials
+GE,2019,0.9012,0.9112,0.0162,-0.62, False, False,Industrials
+GE,2020,0.8734,0.9070,0.0152,-2.21, True, False,Industrials
+GE,2021,0.9123,0.8997,0.0201,0.63, False, False,Industrials
+GE,2022,0.9045,0.9029,0.0191,0.08, False, False,Industrials
+GE,2023,0.9156,0.9036,0.0188,0.64, False, False,Industrials
+AMZN,2016,0.9356,,,, True,Consumer Discretionary
+AMZN,2017,0.9289,,,, True,Consumer Discretionary
+AMZN,2018,0.9312,,,, True,Consumer Discretionary
+AMZN,2019,0.9278,0.9319,0.0034,-1.21, False, False,Consumer Discretionary
+AMZN,2020,0.9123,0.9309,0.0038,-4.89, True, False,Consumer Discretionary
+AMZN,2021,0.9245,0.9272,0.0086,-0.31, False, False,Consumer Discretionary
+AMZN,2022,0.9189,0.9258,0.0087,-0.79, False, False,Consumer Discretionary
+AMZN,2023,0.9312,0.9256,0.0083,0.67, False, False,Consumer Discretionary
+META,2016,0.9445,,,, True,Communication Services
+META,2017,0.9389,,,, True,Communication Services
+META,2018,0.8912,,,, True,Communication Services
+META,2019,0.9123,0.9249,0.0274,-0.46, False, False,Communication Services
+META,2020,0.9034,0.9217,0.0262,-0.70, False, False,Communication Services
+META,2021,0.9289,0.9184,0.0238,0.44, False, False,Communication Services
+META,2022,0.8456,0.9199,0.0240,-3.10, True, False,Communication Services
+META,2023,0.9123,0.9092,0.0312,0.10, False, False,Communication Services
+NFLX,2016,0.9312,,,, True,Communication Services
+NFLX,2017,0.9278,,,, True,Communication Services
+NFLX,2018,0.9234,,,, True,Communication Services
+NFLX,2019,0.9189,0.9275,0.0039,-2.21, True, False,Communication Services
+NFLX,2020,0.9123,0.9253,0.0054,-2.41, True, False,Communication Services
+NFLX,2021,0.9345,0.9223,0.0084,1.45, False, False,Communication Services
+NFLX,2022,0.8934,0.9240,0.0079,-3.87, True, False,Communication Services
+NFLX,2023,0.9267,0.9202,0.0092,0.71, False, False,Communication Services

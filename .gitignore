@@ -1,0 +1,41 @@
+# Data directories — too large for version control
+data/raw/
+data/processed/
+
+# Cached FinBERT embeddings
+cache/
+
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Large model weights
+*.bin
+*.pt
+*.safetensors
+*.ckpt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Logs
+*.log
