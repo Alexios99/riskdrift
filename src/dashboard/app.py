@@ -138,6 +138,31 @@ def main() -> None:
 
     scores = add_sector(scores)
 
+    # ---------------------------------------------------------------------------
+    # KPI metrics bar
+    # ---------------------------------------------------------------------------
+    all_scored = scores.dropna(subset=["z_score"])
+    all_flagged = scores[scores["drift_flag"] == True]
+    fwd_flagged = all_flagged["forward_return_6m"].dropna() if "forward_return_6m" in scores.columns else pd.Series(dtype=float)
+    fwd_unflagged = scores[scores["drift_flag"] == False]["forward_return_6m"].dropna() if "forward_return_6m" in scores.columns else pd.Series(dtype=float)
+    return_spread = (fwd_flagged.mean() - fwd_unflagged.mean()) if (len(fwd_flagged) > 0 and len(fwd_unflagged) > 0) else None
+    strongest = all_flagged.loc[all_flagged["z_score"].idxmin()] if not all_flagged.empty else None
+
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Filings Analysed", len(all_scored))
+    k2.metric("Drift Flags", len(all_flagged))
+    k3.metric(
+        "Return Spread (flagged vs stable)",
+        f"{return_spread:+.1%}" if return_spread is not None else "N/A",
+        help="Mean 6m forward return: flagged minus unflagged companies",
+    )
+    k4.metric(
+        "Strongest Signal",
+        f"{strongest['ticker']} {int(strongest['year'])}" if strongest is not None else "N/A",
+        f"z = {strongest['z_score']:.1f}" if strongest is not None else "",
+    )
+    st.divider()
+
     # Sidebar controls
     with st.sidebar:
         st.header("Filters")
@@ -257,18 +282,51 @@ def main() -> None:
 
             st.plotly_chart(fig, use_container_width=True)
 
-            st.subheader("Z-Score Timeline")
-            fig_z = px.bar(
-                ticker_df, x="year", y="z_score",
-                color=ticker_df["z_score"].apply(lambda z: "Flagged" if z < z_threshold else "Normal"),
-                color_discrete_map={"Flagged": "red", "Normal": "steelblue"},
-                title=f"{selected_ticker} — Drift Z-Score",
-                labels={"z_score": "Z-Score", "year": "Fiscal Year"},
-            )
+            st.subheader("Z-Score & Forward Return")
+            has_returns = "forward_return_6m" in ticker_df.columns and ticker_df["forward_return_6m"].notna().any()
+
+            fig_z = go.Figure()
+            colors = ["red" if z < z_threshold else "steelblue" for z in ticker_df["z_score"]]
+            fig_z.add_trace(go.Bar(
+                x=ticker_df["year"], y=ticker_df["z_score"],
+                name="Z-Score", marker_color=colors, yaxis="y1",
+            ))
             fig_z.add_hline(y=z_threshold, line_dash="dash", line_color="red",
-                            annotation_text=f"Threshold ({z_threshold})")
-            fig_z.update_layout(height=350, showlegend=False)
+                            annotation_text=f"Flag threshold ({z_threshold})", yref="y1")
+
+            if has_returns:
+                ret_colors = ["#d62728" if v < 0 else "#2ca02c"
+                              for v in ticker_df["forward_return_6m"].fillna(0)]
+                fig_z.add_trace(go.Bar(
+                    x=ticker_df["year"],
+                    y=ticker_df["forward_return_6m"] * 100,
+                    name="6m Fwd Return (%)",
+                    marker_color=ret_colors,
+                    opacity=0.6,
+                    yaxis="y2",
+                ))
+                fig_z.update_layout(
+                    yaxis2=dict(
+                        title="6m Forward Return (%)",
+                        overlaying="y",
+                        side="right",
+                        showgrid=False,
+                        zeroline=True,
+                        zerolinecolor="lightgrey",
+                    ),
+                    barmode="group",
+                )
+
+            fig_z.update_layout(
+                title=f"{selected_ticker} — Drift Z-Score" + (" vs 6m Forward Return" if has_returns else ""),
+                xaxis_title="Fiscal Year",
+                yaxis_title="Z-Score",
+                height=380,
+                legend={"orientation": "h"},
+            )
             st.plotly_chart(fig_z, use_container_width=True)
+            if has_returns:
+                st.caption("Green bars = positive 6m return after filing. Red bars = negative. Grouped with z-score to show signal → outcome relationship.")
         else:
             st.info("No z-score data available for this ticker.")
 
