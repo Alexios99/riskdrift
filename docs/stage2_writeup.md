@@ -29,7 +29,7 @@
 ## 2. Repository & Deployment Links
 
 **GitHub Repository:** https://github.com/Alexios99/riskdrift
-**Live Demo:** `streamlit run src/dashboard/app.py` (local) or [hosted URL to be added]
+**Live Demo:** https://riskdrift-ffrv65ruzick8n9r8uisna.streamlit.app/
 
 > Repository is public and released under MIT License. All code, pre-processed sample data, and cached embeddings for the sample universe are included.
 
