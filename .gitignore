@@ -39,3 +39,13 @@ Thumbs.db
 
 # Logs
 *.log
+
+# PDFs (competition documents, not part of the codebase)
+*.pdf
+
+# Internal/working docs
+docs/mentor_email.txt
+docs/handover.md
+
+# Claude Code session files
+.claude/
