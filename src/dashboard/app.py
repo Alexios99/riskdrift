@@ -183,16 +183,14 @@ def main() -> None:
         flagged = year_df[year_df["z_score"] < z_threshold]
         if not flagged.empty:
             st.error(f"🚨 {len(flagged)} drift flag(s) detected")
-            st.dataframe(
-                flagged[["ticker", "sector", "cosine_similarity", "z_score", "drift_flag"]]
-                .rename(columns={
-                    "cosine_similarity": "Cosine Sim",
-                    "z_score": "Z-Score",
-                    "drift_flag": "Flag",
-                })
-                .style.format({"Cosine Sim": "{:.4f}", "Z-Score": "{:.2f}"}),
-                use_container_width=True,
-            )
+            display_df = flagged[["ticker", "sector", "cosine_similarity", "z_score", "drift_flag"]].rename(columns={
+                "cosine_similarity": "Cosine Sim",
+                "z_score": "Z-Score",
+                "drift_flag": "Flag",
+            }).copy()
+            display_df["Cosine Sim"] = display_df["Cosine Sim"].map("{:.4f}".format)
+            display_df["Z-Score"] = display_df["Z-Score"].map("{:.2f}".format)
+            st.dataframe(display_df, use_container_width=True)
         else:
             st.success("No drift flags for selected filters.")
 
