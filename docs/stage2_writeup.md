@@ -63,7 +63,7 @@ Flags trigger at z < −2.0. Optionally, Bayesian Online Change-Point Detection 
 
 **Stage E — Validation & Dashboard** (`src/analysis/`, `src/dashboard/app.py`)
 
-Drift flags are correlated with 6-month forward total returns (yfinance). A long-short backtest quantifies signal quality. The Streamlit dashboard provides an interactive watchlist, drift timelines, diff-highlighted text viewer, and sector heatmap.
+Drift flags are correlated with 6-month forward total returns (yfinance). The Streamlit dashboard provides five views: (1) a KPI summary bar showing total filings, flag count, return spread, and strongest signal; (2) an interactive watchlist ranked by z-score with forward returns for flagged companies; (3) a drift timeline with forward return overlay on a dual y-axis; (4) a diff-highlighted text viewer showing exactly which risk language changed; and (5) a sector heatmap of mean z-score across GICS sectors and years.
 
 ---
 
@@ -77,7 +77,7 @@ Drift flags are correlated with 6-month forward total returns (yfinance). A long
 
 **Preprocessing:** HTML stripped with BeautifulSoup (lxml). Boilerplate table-of-contents entries removed. Text normalised (whitespace collapsed, form feeds removed). Items shorter than 500 characters after cleaning are flagged as likely extraction failures and excluded.
 
-**Sample dataset:** `data/sample/` contains pre-extracted Item 1A text and pre-computed embeddings for 10 S&P 500 companies across 9 years (2015–2023), enabling full pipeline demonstration without downloading raw filings.
+**Sample dataset:** `data/sample/` contains pre-extracted Item 1A text and drift scores for 9 S&P 500 companies (BA, AAPL, META, XOM, NFLX, JPM, JNJ, KO, MSFT) across 2015–2023 — 71 company-years spanning 6 GICS sectors — enabling full pipeline demonstration without downloading raw filings.
 
 ---
 
@@ -85,7 +85,7 @@ Drift flags are correlated with 6-month forward total returns (yfinance). A long
 
 ### 5.1 Pipeline Validation on Real Data
 
-The full pipeline was run on 5 S&P 500 companies — **BA, AAPL, META, XOM, NFLX** — across 2015–2023, processing 45 real 10-K filings sourced directly from SEC EDGAR. FinBERT embeddings were computed using sliding-window mean-pooling and cached locally. Drift scores were computed using a rolling expanding-window z-score (minimum 3-year history, no look-ahead), generating 6 statistically significant drift flags (z < −2.0).
+The full pipeline was run on 9 S&P 500 companies — **BA, AAPL, META, XOM, NFLX, JPM, JNJ, KO, MSFT** — spanning 6 GICS sectors across 2015–2023, processing 71 real 10-K filings sourced directly from SEC EDGAR. FinBERT embeddings were computed using sliding-window mean-pooling and cached locally. Drift scores were computed using a rolling expanding-window z-score (minimum 3-year history, no look-ahead), generating 6 statistically significant drift flags (z < −2.0). Six-month forward returns were fetched via yfinance for all 71 company-years using estimated 10-K filing dates.
 
 ### 5.2 Drift Flag Results
 

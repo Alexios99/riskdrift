@@ -21,12 +21,14 @@ An NLP pipeline that detects when a company's SEC 10-K Item 1A (Risk Factors) la
 SEC EDGAR → download → extract Item 1A → FinBERT embed → drift score → dashboard
 ```
 
-- **45 real filings** downloaded, extracted, embedded, scored (5 tickers × 9 years)
+- **71 real filings** downloaded, extracted, embedded, scored (9 tickers × ~8 years)
 - **6 real drift flags** in `data/sample/drift_scores_real.csv`
-- Dashboard loads and runs on this data
+- **6-month forward returns** computed for all 71 company-years via yfinance
+- Dashboard live at https://riskdrift-ffrv65ruzick8n9r8uisna.streamlit.app/
 
 ### Tickers with real data
-BA, AAPL, META, XOM, NFLX — all in `data/processed/` and `cache/`
+BA, AAPL, META, XOM, NFLX, JPM, JNJ, KO, MSFT — all in `data/processed/` and `cache/`
+Covers 6 GICS sectors: Industrials, IT, Communication Services, Energy, Financials, Health Care, Consumer Staples
 
 ### Real drift flags (validated against known events)
 | Ticker | Year | Z-Score | Story |
@@ -105,18 +107,21 @@ riskdrift/
 
 ## What Needs Doing Before Submission
 
-### CRITICAL (must do tonight)
-- [ ] **Push to GitHub** — repo is local only, no remote set yet. Create public repo, push, send link to mentor Adam Denny
-- [ ] **Fill in `docs/stage2_writeup.md` Discussion of Results** — currently a placeholder. Use the 6 real drift flags as the content. Boeing 2019 is the headline case study
-- [ ] **Write the 4-bullet Executive Summary** in the writeup — this is 50% of the Stage 2 score (mentors rank teams on executive summaries). Make it sharp
+### DONE ✅
+- [x] Push to GitHub — https://github.com/Alexios99/riskdrift
+- [x] Fill in Discussion of Results with real drift flags and forward returns
+- [x] Executive summary written
+- [x] Deploy to Streamlit Cloud — https://riskdrift-ffrv65ruzick8n9r8uisna.streamlit.app/
+- [x] Text diff tab working (sample processed text committed)
+- [x] Expand to 9 tickers across 6 sectors
+- [x] 6-month forward returns for all 71 company-years
+- [x] KPI metrics bar on dashboard
+- [x] Forward return overlay on drift timeline
 
-### HIGH (do if time allows)
-- [ ] **Download more tickers** — run `python -m src.pipeline.edgar_downloader --tickers JPM GE TSLA GOOGL --start 2015 --end 2023` then extract + embed + score. More tickers = stronger backtest and better sector heatmap
-- [ ] **Run the backtest** — `backtest.py` is built but needs a `filing_dates.csv`. Would give real Sharpe/IR numbers to put in the writeup
-
-### NICE TO HAVE
-- [ ] Populate `data/sample/processed/` with extracted text so the text diff tab works in the dashboard without a full local setup
-- [ ] Test that the repo runs from a clean clone (judges will do this)
+### REMAINING
+- [ ] Email Adam Denny the GitHub + Streamlit links
+- [ ] Phase 3 (Stage 3): Responsible AI tab on dashboard
+- [ ] Scale to 100+ tickers for credible Sharpe/IR numbers
 
 ---
 
