@@ -16,7 +16,10 @@ from __future__ import annotations
 
 import difflib
 import logging
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import numpy as np
 import pandas as pd
@@ -30,9 +33,9 @@ from src.pipeline.drift_scorer import score_all
 
 logger = logging.getLogger(__name__)
 
-DATA_PROCESSED_DIR = Path(__file__).resolve().parents[3] / "data" / "processed"
-SAMPLE_DIR = Path(__file__).resolve().parents[3] / "data" / "sample"
-CACHE_DIR = Path(__file__).resolve().parents[3] / "cache"
+DATA_PROCESSED_DIR = Path(__file__).resolve().parents[2] / "data" / "processed"
+SAMPLE_DIR = Path(__file__).resolve().parents[2] / "data" / "sample"
+CACHE_DIR = Path(__file__).resolve().parents[2] / "cache"
 SAMPLE_SCORES_CSV = SAMPLE_DIR / "drift_scores_real.csv"
 
 # ---------------------------------------------------------------------------
@@ -54,8 +57,13 @@ st.set_page_config(
 @st.cache_data(ttl=3600)
 def load_drift_scores() -> pd.DataFrame:
     """Load drift scores from CSV or compute from cache directory."""
+    from src.analysis.sector_aggregator import SECTOR_MAP
+
     if SAMPLE_SCORES_CSV.exists():
-        return pd.read_csv(SAMPLE_SCORES_CSV)
+        df = pd.read_csv(SAMPLE_SCORES_CSV)
+        if "sector" not in df.columns:
+            df["sector"] = df["ticker"].map(SECTOR_MAP).fillna("Unknown")
+        return df
 
     # Fall back to computing from cached embeddings
     cache_tickers = [p.name for p in CACHE_DIR.iterdir() if p.is_dir()] if CACHE_DIR.exists() else []
@@ -63,7 +71,10 @@ def load_drift_scores() -> pd.DataFrame:
         st.warning("No cached embeddings found. Run the pipeline first or use sample data.")
         return pd.DataFrame()
 
-    return score_all(cache_tickers)
+    df = score_all(cache_tickers)
+    if "sector" not in df.columns:
+        df["sector"] = df["ticker"].map(SECTOR_MAP).fillna("Unknown")
+    return df
 
 
 @st.cache_data
