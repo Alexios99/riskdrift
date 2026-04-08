@@ -62,7 +62,7 @@ from src.pipeline.embedder import FinBERTEmbedder
 
 logger = logging.getLogger(__name__)
 
-CACHE_DIR = Path(__file__).resolve().parents[3] / "cache"
+CACHE_DIR = Path(__file__).resolve().parents[2] / "cache"
 QUARTERLY_SUBDIR = "quarterly"
 
 VALID_QUARTERS = ("Q1", "Q2", "Q3")  # Q4 is the 10-K; no 10-Q for Q4

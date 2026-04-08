@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 DATA_PROCESSED_DIR = Path(__file__).resolve().parents[3] / "data" / "processed"
 SAMPLE_DIR = Path(__file__).resolve().parents[3] / "data" / "sample"
 CACHE_DIR = Path(__file__).resolve().parents[3] / "cache"
-SAMPLE_SCORES_CSV = SAMPLE_DIR / "drift_scores_sample.csv"
+SAMPLE_SCORES_CSV = SAMPLE_DIR / "drift_scores_real.csv"
 
 # ---------------------------------------------------------------------------
 # Page configuration

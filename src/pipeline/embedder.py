@@ -36,8 +36,8 @@ from transformers import AutoModel, AutoTokenizer
 
 logger = logging.getLogger(__name__)
 
-DATA_PROCESSED_DIR = Path(__file__).resolve().parents[3] / "data" / "processed"
-CACHE_DIR = Path(__file__).resolve().parents[3] / "cache"
+DATA_PROCESSED_DIR = Path(__file__).resolve().parents[2] / "data" / "processed"
+CACHE_DIR = Path(__file__).resolve().parents[2] / "cache"
 
 MODEL_NAME = "ProsusAI/finbert"
 MAX_LENGTH = 512

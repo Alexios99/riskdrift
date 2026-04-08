@@ -52,8 +52,8 @@ from scipy.spatial.distance import cosine
 
 logger = logging.getLogger(__name__)
 
-CACHE_DIR = Path(__file__).resolve().parents[3] / "cache"
-RESULTS_DIR = Path(__file__).resolve().parents[3] / "data" / "processed"
+CACHE_DIR = Path(__file__).resolve().parents[2] / "cache"
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "data" / "processed"
 
 # ---------------------------------------------------------------------------
 # Configuration defaults

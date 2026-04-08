@@ -29,8 +29,8 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
-DATA_RAW_DIR = Path(__file__).resolve().parents[3] / "data" / "raw"
-DATA_PROCESSED_DIR = Path(__file__).resolve().parents[3] / "data" / "processed"
+DATA_RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw" / "sec-edgar-filings"
+DATA_PROCESSED_DIR = Path(__file__).resolve().parents[2] / "data" / "processed"
 
 # Patterns that mark the start of Item 1A
 _ITEM_1A_START = re.compile(
@@ -93,11 +93,45 @@ def _clean_text(text: str) -> str:
     return text.strip()
 
 
+def parse_filing_sgml(sgml_path: Path) -> tuple[str, int | None]:
+    """Parse an EDGAR full-submission.txt SGML file.
+
+    Returns the plain text of the primary 10-K document and the fiscal year
+    extracted from the CONFORMED PERIOD OF REPORT header.
+    """
+    raw = sgml_path.read_text(encoding="utf-8", errors="replace")
+
+    # Extract fiscal year from header
+    year: int | None = None
+    period_match = re.search(r"CONFORMED PERIOD OF REPORT:\s*(\d{4})", raw)
+    if period_match:
+        year = int(period_match.group(1))
+
+    # Extract the primary 10-K document block (first <TYPE>10-K document)
+    doc_match = re.search(
+        r"<TYPE>10-K.*?<TEXT>(.*?)</TEXT>",
+        raw,
+        re.DOTALL | re.IGNORECASE,
+    )
+    if not doc_match:
+        return raw[:100_000], year  # fallback: use raw text
+
+    doc_text = doc_match.group(1)
+
+    # Parse as HTML if it looks like HTML, otherwise use as-is
+    if "<html" in doc_text.lower() or "<body" in doc_text.lower():
+        soup = BeautifulSoup(doc_text, "lxml")
+        for tag in soup(["script", "style"]):
+            tag.decompose()
+        return soup.get_text(separator="\n"), year
+
+    return doc_text, year
+
+
 def parse_filing_html(html_path: Path) -> str:
     """Parse an EDGAR HTML filing into plain text."""
     html = html_path.read_text(encoding="utf-8", errors="replace")
     soup = BeautifulSoup(html, "lxml")
-    # Remove script/style tags
     for tag in soup(["script", "style"]):
         tag.decompose()
     return soup.get_text(separator="\n")
@@ -109,14 +143,14 @@ def process_ticker(ticker: str, output_dir: Path | None = None) -> dict[int, Pat
     Parameters
     ----------
     ticker:
-        Ticker symbol. Expects filings in data/raw/{ticker}/10-K/.
+        Ticker symbol. Expects filings in data/raw/sec-edgar-filings/{ticker}/10-K/.
     output_dir:
         Directory to write extracted text. Defaults to data/processed/{ticker}/.
 
     Returns
     -------
     dict[int, Path]
-        Mapping of filing year → output file path.
+        Mapping of fiscal year → output file path.
     """
     raw_dir = DATA_RAW_DIR / ticker / "10-K"
     if not raw_dir.exists():
@@ -128,26 +162,20 @@ def process_ticker(ticker: str, output_dir: Path | None = None) -> dict[int, Pat
 
     results: dict[int, Path] = {}
 
-    # sec-edgar-downloader organises filings as {raw_dir}/{accession-number}/
     for filing_dir in sorted(raw_dir.iterdir()):
         if not filing_dir.is_dir():
             continue
 
-        # Find the primary document (largest .htm/.html file)
-        html_files = sorted(
-            filing_dir.glob("*.htm") or filing_dir.glob("*.html"),
-            key=lambda p: p.stat().st_size,
-            reverse=True,
-        )
-        if not html_files:
+        sgml_file = filing_dir / "full-submission.txt"
+        if not sgml_file.exists():
             continue
 
-        filing_date_file = filing_dir / "filing-details.json"
-        year = _extract_year_from_dir(filing_dir, filing_date_file)
+        raw_text, year = parse_filing_sgml(sgml_file)
+
         if year is None:
+            logger.warning("Could not determine year for %s / %s", ticker, filing_dir.name)
             continue
 
-        raw_text = parse_filing_html(html_files[0])
         item_1a = extract_item_1a(raw_text)
 
         if item_1a is None:
@@ -160,27 +188,6 @@ def process_ticker(ticker: str, output_dir: Path | None = None) -> dict[int, Pat
         logger.info("Extracted Item 1A for %s %d (%d chars)", ticker, year, len(item_1a))
 
     return results
-
-
-def _extract_year_from_dir(filing_dir: Path, details_file: Path) -> int | None:
-    """Best-effort extraction of the fiscal year from a filing directory name."""
-    import json
-
-    if details_file.exists():
-        try:
-            details = json.loads(details_file.read_text())
-            filed_at = details.get("filedAt", "")
-            if filed_at:
-                return int(filed_at[:4])
-        except Exception:
-            pass
-
-    # Fallback: parse year from directory name (accession numbers contain dates)
-    name = filing_dir.name
-    year_match = re.search(r"(20\d{2})", name)
-    if year_match:
-        return int(year_match.group(1))
-    return None
 
 
 def process_all(tickers: list[str]) -> None:

@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 # Configuration
 # ---------------------------------------------------------------------------
 
-DATA_RAW_DIR = Path(__file__).resolve().parents[3] / "data" / "raw"
+DATA_RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
 EDGAR_USER_AGENT = "RiskDrift/1.0 (alpha-turing-manchester; alexios0905@gmail.com)"
 REQUEST_DELAY = 0.12  # seconds between requests → stays safely under 10 req/s
 
@@ -53,7 +53,7 @@ def _make_downloader(output_dir: Path) -> Downloader:
     dl = Downloader(
         company_name="RiskDrift",
         email_address="alexios0905@gmail.com",
-        save_path=str(output_dir),
+        download_folder=str(output_dir),
     )
     return dl
 
