@@ -1,0 +1,412 @@
+Item  1A.
+Risk Factors
+5
+ 
+Item  1B.
+Unresolved Staff Comments
+14
+ 
+Item  2.
+Properties
+14
+ 
+Item  3.
+Legal Proceedings
+15
+ 
+Item  4.
+Mine Safety Disclosures
+15
+PART II
+ 
+ 
+ 
+ 
+Item  5.
+Market for Registrant’s Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities
+16
+ 
+Item  6.
+Selected Financial Data
+17
+ 
+Item  7.
+Management’s Discussion and Analysis of Financial Condition and Results of Operations
+18
+ 
+Item  7A.
+Quantitative and Qualitative Disclosures About Market Risk
+46
+ 
+Item  8.
+Financial Statements and Supplementary Data
+47
+ 
+Item  9.
+Changes in and Disagreements With Accountants on Accounting and Financial Disclosure
+117
+ 
+Item  9A.
+Controls and Procedures
+117
+ 
+Item  9B.
+Other Information
+117
+PART III
+ 
+ 
+ 
+ 
+Item  10.
+Directors, Executive Officers and Corporate Governance
+118
+ 
+Item  11.
+Executive Compensation
+120
+ 
+Item  12.
+Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters
+121
+ 
+Item  13.
+Certain Relationships and Related Transactions, and Director Independence
+121
+ 
+Item  14.
+Principal Accounting Fees and Services
+121
+PART IV
+ 
+ 
+ 
+ 
+Item  15.
+Exhibits, Financial Statement Schedules
+122
+ 
+Item  16.
+Form 10-K Summary
+124
+ 
+Signatures
+125
+Table of Contents
+PART I
+Item 1. Business
+The Boeing Company, together with its subsidiaries (herein referred to as “Boeing,” the “Company,” “we,” “us,” “our”), is one of the world’s major aerospace firms.
+We are organized based on the products and services we offer. We operate in four reportable segments:
+•
+Commercial Airplanes (BCA);
+•
+Defense, Space & Security
+ (
+BDS
+);
+•
+Global Services
+ (
+BGS
+);
+•
+Boeing Capital
+ (
+BCC
+).
+Commercial Airplanes Segment
+This segment develops, produces and markets commercial jet aircraft and provides fleet support services, principally to the commercial airline industry worldwide. We are a leading producer of commercial aircraft and offer a family of commercial jetliners designed to meet a broad spectrum of global passenger and cargo requirements of airlines. This family of commercial jet aircraft in production includes the 737 narrow-body model and the 747, 767, 777 and 787 wide-body models. Development continues on certain 737 MAX derivatives and the 777X program. 
+Defense, Space & Security Segment
+This segment is engaged in the research, development, production and modification of manned and unmanned military aircraft and weapons systems for strike, surveillance and mobility, including fighter and trainer aircraft; vertical lift, including rotorcraft and tilt-rotor aircraft; and commercial derivative aircraft, including anti-submarine and tanker aircraft. In addition, this segment is engaged in the research, development, production and modification of the following products and related services: strategic defense and intelligence systems, including strategic missile and defense systems, command, control, communications, computers, intelligence, surveillance and reconnaissance (C4ISR), cyber and information solutions, and intelligence systems; satellite systems, including government and commercial satellites and space exploration. 
+BDS' primary customer is the 
+United States Department of Defense
+ (
+U.S. DoD
+). Revenues from the U.S. DoD, including foreign military sales through the U.S. government, accounted for approximately 
+86%
+ of its 
+2018
+ revenues. Other significant 
+BDS
+ customers include the National Aeronautics and Space Administration (NASA) and customers in international defense, civil and commercial satellite markets. 
+This segment's primary products include the following fixed-wing military aircraft: F/A-18E/F Super Hornet, F-15 Strike Eagle, P-8 programs, KC-46A Tanker, and T-X Trainer. This segment produces rotorcraft and rotary-wing programs, such as CH-47 Chinook, AH-64 Apache, and V-22 Osprey. In addition, this segment's products include space and missile systems including: government and commercial satellites, the International Space Station, Commercial Crew, missile defense and weapons programs, and Joint Direct Attack Munition, as well as the United Launch Alliance joint venture.
+Global Services
+ Segment
+This segment provides services to our commercial and defense customers worldwide. BGS sustains aerospace platforms and systems with a full spectrum of products and services, including supply chain and logistics management, engineering, maintenance and modifications, upgrades and conversions, spare 
+1
+Table of Contents
+parts, pilot and maintenance training systems and services, technical and maintenance documents, and data analytics and digital services. 
+Boeing Capital
+ Segment
+BCC seeks to ensure that Boeing customers have the financing they need to buy and take delivery of their Boeing product and manages overall financing exposure. 
+BCC
+’s portfolio consists of equipment under operating leases, finance leases, notes and other receivables, assets held for sale or re-lease and investments. 
+Intellectual Property
+We own numerous patents and have licenses for the use of patents owned by others, which relate to our products and their manufacture. In addition to owning a large portfolio of intellectual property, we also license intellectual property to and from third parties. For example, the U.S. government has licenses in our patents that are developed in performance of government contracts, and it may use or authorize others to use the inventions covered by such patents for government purposes. Unpatented research, development and engineering skills, as well as certain trademarks, trade secrets, and other intellectual property rights, also make an important contribution to our business. While our intellectual property rights in the aggregate are important to the operation of each of our businesses, we do not believe that our business would be materially affected by the expiration of any particular intellectual property right or termination of any particular intellectual property patent license agreement.
+Employees
+Total workforce level at 
+December 31, 2018
+ was approximately 
+153,000
+. As of 
+December 31, 2018
+, our principal collective bargaining agreements were with the following unions:
+Union
+Percent of our Employees Represented
+Status of the Agreements with Major Union
+The International Association of Machinists and Aerospace Workers (IAM)
+22%
+We have two major agreements; one expiring in June 2022 and one in September 2024.
+The Society of Professional Engineering Employees in Aerospace (SPEEA)
+11%
+We have two major agreements expiring in Octo
+ber 2022.
+The United Automobile, Aerospace and Agricultural Implement Workers of America (UAW)
+1%
+We have one major agreement expiring in October 2022.
+Competition
+The commercial jet aircraft market and the airline industry remain extremely competitive. We face aggressive international competitors who are intent on increasing their market share, such as Airbus and other entrants from Russia, China and Japan. We are focused on improving our processes and continuing cost reduction efforts. We intend to continue to compete with other airplane manufacturers by providing customers with greater value products. 
+BDS faces strong competition in all market segments, primarily from Lockheed Martin Corporation, Northrop Grumman Corporation, Raytheon Company, General Dynamics Corporation and SpaceX. Non-U.S. companies such as BAE Systems and Airbus Group continue to build a strategic presence in the U.S. 
+2
+Table of Contents
+market by strengthening their North American operations and partnering with U.S. defense companies. In addition, certain competitors have occasionally formed teams with other competitors to address specific customer requirements. BDS expects the trend of strong competition to continue into 
+2019
+.
+The commercial and defense services market is an extremely challenging landscape made up of many of the same strong U.S. and non-U.S. competitors facing BCA and BDS along with other competitors in those markets. BGS leverages our extensive services network offering products and services which span the life cycle of our defense and commercial airplane programs: training, fleet services and logistics, maintenance and engineering, modifications and upgrades - as well as the daily cycle of gate-to-gate operations. BGS expects the market to remain highly competitive in 
+2019
+, and intends to grow market share by leveraging a high level of customer satisfaction and productivity.
+Regulatory Matters
+Our businesses are heavily regulated in most of our markets. We deal with numerous U.S. government agencies and entities, including but not limited to all of the branches of the U.S. military, NASA, the Federal Aviation Administration (FAA) and the Department of Homeland Security. Similar government authorities exist in our non-U.S. markets.
+Government Contracts.
+ The U.S. government, and other governments, may terminate any of our government contracts at their convenience, as well as for default based on our failure to meet specified performance requirements. If any of our U.S. government contracts were to be terminated for convenience, we generally would be entitled to receive payment for work completed and allowable termination or cancellation costs. If any of our government contracts were to be terminated for default, generally the U.S. government would pay only for the work that has been accepted and could require us to pay the difference between the original contract price and the cost to re-procure the contract items, net of the work accepted from the original contract. The U.S. government can also hold us liable for damages resulting from the default.
+Commercial Aircraft.
+ In the U.S., our commercial aircraft products are required to comply with FAA regulations governing production and quality systems, airworthiness and installation approvals, repair procedures and continuing operational safety. Outside the U.S., similar requirements exist for airworthiness, installation and operational approvals. These requirements are generally administered by the national aviation authorities of each country and, in the case of Europe, coordinated by the European Joint Aviation Authorities.
+Environmental.
+ We are subject to various federal, state, local and non-U.S. laws and regulations relating to environmental protection, including the discharge, treatment, storage, disposal and remediation of hazardous substances and wastes. We continually assess our compliance status and management of environmental matters to ensure our operations are in compliance with all applicable environmental laws and regulations. Investigation, remediation, and operation and maintenance costs associated with environmental compliance and management of sites are a normal, recurring part of our operations. These costs often are allowable costs under our contracts with the U.S. government. It is reasonably possible that costs incurred to ensure continued environmental compliance could have a material impact on our results of operations, financial condition or cash flows if additional work requirements or more stringent clean-up standards are imposed by regulators, new areas of soil, air and groundwater contamination are discovered and/or expansions of work scope are prompted by the results of investigations.
+A Potentially Responsible Party (PRP) has joint and several liability under existing U.S. environmental laws. Where we have been designated a PRP by the Environmental Protection Agency or a state environmental agency, we are potentially liable to the government or third parties for the full cost of remediating contamination at our facilities or former facilities or at third-party sites. If we were required to fully fund the remediation of a site for which we were originally assigned a partial share, the statutory 
+3
+Table of Contents
+framework would allow us to pursue rights to contribution from other PRPs. For additional information relating to environmental contingencies, see Note 
+14
+ to our Consolidated Financial Statements.
+Non-U.S. Sales.
+ Our non-U.S. sales are subject to both U.S. and non-U.S. governmental regulations and procurement policies and practices, including regulations relating to import-export control, tariffs, investment, exchange controls, anti-corruption, and repatriation of earnings. Non-U.S. sales are also subject to varying currency, political and economic risks.
+Raw Materials, Parts, and Subassemblies
+We are highly dependent on the availability of essential materials, parts and subassemblies from our suppliers and subcontractors. The most important raw materials required for our aerospace products are aluminum (sheet, plate, forgings and extrusions), titanium (sheet, plate, forgings and extrusions) and composites (including carbon and boron). Although alternative sources generally exist for these raw materials, qualification of the sources could take a year or more. Many major components and product equipment items are procured or subcontracted on a sole-source basis with a number of companies.
+Suppliers
+We are dependent upon the ability of a large number of U.S. and non-U.S. suppliers and subcontractors to meet performance specifications, quality standards and delivery schedules at our anticipated costs. While we maintain an extensive qualification and performance surveillance system to control risk associated with such reliance on third parties, failure of suppliers or subcontractors to meet commitments could adversely affect production schedules and program/contract profitability, thereby jeopardizing our ability to fulfill commitments to our customers. We are also dependent on the availability of energy sources, such as electricity, at affordable prices.
+Seasonality
+No material portion of our business is considered to be seasonal.
+Executive Officers of the Registrant
+See “Item 10. Directors, Executive Officers and Corporate Governance” in Part III.
+Other Information
+Boeing was originally incorporated in the State of Washington in 1916 and reincorporated in Delaware in 1934. Our principal executive offices are located at 100 N. Riverside Plaza, Chicago, Illinois 60606 and our telephone number is (312) 544-2000.
+General information about us can be found at www.boeing.com. The information contained on or connected to our website is not incorporated by reference into this Annual Report on Form 10-K and should not be considered part of this or any other report filed with the Securities and Exchange Commission (SEC). Our Annual Report on Form 10-K, Quarterly Reports on Form 10-Q and Current Reports on Form 8-K, as well as any amendments to those reports, are available free of charge through our website as soon as reasonably practicable after we file them with, or furnish them to, the SEC. The SEC maintains a website at www.sec.gov that contains reports, proxy statements and other information regarding SEC registrants, including Boeing.
+4
+Table of Contents
+Forward-Looking Statements
+This report, as well as our annual report to shareholders, quarterly reports, and other filings we make with the SEC, press and earnings releases and other written and oral communications, contain “forward-looking statements” within the meaning of the Private Securities Litigation Reform Act of 1995. Words such as “may,” “should,” “expects,” “intends,” “projects,” “plans,” “believes,” “estimates,” “targets,” “anticipates” and similar expressions generally identify these forward-looking statements. Examples of forward-looking statements include statements relating to our future financial condition and operating results, as well as any other statement that does not directly relate to any historical or current fact.
+Forward-looking statements are based on expectations and assumptions that we believe to be reasonable when made, but that may not prove to be accurate. These statements are not guarantees and are subject to risks, uncertainties and changes in circumstances that are difficult to predict. Many factors, including those set forth in the “Risk Factors” section below and other important factors disclosed in this report and from time to time in our other filings with the SEC, could cause actual results to differ materially and adversely from these forward-looking statements. Any forward-looking statement speaks only as of the date on which it is made, and we assume no obligation to update or revise any forward-looking statement whether as a result of new information, future events or otherwise, except as required by law.
+Item 1A. Risk Factors 
+An investment in our common stock or debt securities involves risks and uncertainties and our actual results and future trends may differ materially from our past or projected future performance. We urge investors to consider carefully the risk factors described below in evaluating the information contained in this report.
+Our Commercial Airplanes and Global Services businesses depend heavily on commercial airlines, and are subject to unique risks.
+Market conditions have a significant impact on demand for our commercial aircraft and related services.
+ The commercial aircraft market is predominantly driven by long-term trends in airline passenger and cargo traffic. The principal factors underlying long-term traffic growth are sustained economic growth and political stability both in developed and emerging markets. Demand for our commercial aircraft is further influenced by airline profitability, availability of aircraft financing, world trade policies, government-to-government relations, technological advances, price and other competitive factors, fuel prices, terrorism, epidemics and environmental regulations. Traditionally, the airline industry has been cyclical and very competitive and has experienced significant profit swings and constant challenges to be more cost competitive. In addition, availability of financing to non-U.S. customers depends in part on the Export-Import Bank of the United States being fully operational. Significant deterioration in the global economic environment, the airline industry generally, or the financial stability of one or more of our major customers could result in fewer new orders for aircraft or services, or could cause customers to seek to postpone or cancel contractual orders and/or payments to us, which could result in lower revenues, profitability and cash flows and a reduction in our contractual backlog. In addition, because our commercial aircraft backlog consists of aircraft scheduled for delivery over a period of several years, any of these macroeconomic, industry or customer impacts could unexpectedly affect deliveries over a long period.
+We enter into firm fixed-price aircraft sales contracts with indexed price escalation clauses which could subject us to losses if we have cost overruns or if increases in our costs exceed the applicable escalation rate.
+ Commercial aircraft sales contracts are often entered into years before the aircraft are delivered. In order to help account for economic fluctuations between the contract date and delivery date, aircraft pricing generally consists of a fixed amount as modified by price escalation formulas derived from labor, commodity and other price indices. Our revenue estimates are based on current expectations with respect to these escalation formulas, but the actual escalation amounts are outside of our control. Escalation factors can 
+5
+Table of Contents
+fluctuate significantly from period to period. Changes in escalation amounts can significantly impact revenues and operating margins in our Commercial Airplanes business.
+We derive a significant portion of our revenues from a limited number of commercial airlines.
+ We can make no assurance that any customer will exercise purchase options, fulfill existing purchase commitments or purchase additional products or services from us. In addition, fleet decisions, airline consolidations or financial challenges involving any of our major commercial airline customers could significantly reduce our revenues and limit our opportunity to generate profits from those customers.
+Our Commercial Airplanes business depends on our ability to maintain a healthy production system, achieve planned production rate targets, successfully develop new aircraft or new derivative aircraft, and meet or exceed stringent performance and reliability standards.
+The commercial aircraft business is extremely complex, involving extensive coordination and integration with U.S and non-U.S. suppliers, highly-skilled labor from thousands of employees and other partners, and stringent regulatory requirements and performance and reliability standards. In addition, the introduction of new aircraft programs and/or derivatives, such as the 777X, involves increased risks associated with meeting development, testing, production and certification schedules. As a result, our ability to deliver aircraft on time, satisfy regulatory and customer requirements, and achieve or maintain, as applicable, program profitability is subject to significant risks.
+We must minimize disruption caused by production changes and achieve productivity improvements in order to meet customer demand and maintain our profitability. 
+We have plans to adjust production rates on several of our commercial aircraft programs, while at the same time engaging in significant ongoing development and production of the 777X aircraft. In addition, we continue to seek opportunities to reduce the costs of building our aircraft, including working with our suppliers to reduce supplier costs, identifying and implementing productivity improvements, and optimizing how we manage inventory. If production rate changes at any of our commercial aircraft assembly facilities are delayed or create significant disruption to our production system, or if our suppliers cannot timely deliver components to us at the cost and rates necessary to achieve our targets, we may be unable to meet delivery schedules and/or the financial performance of one or more of our programs may suffer.
+Operational challenges impacting the production system for one or more of our commercial aircraft programs could result in production delays and/or failure to meet customer demand for new aircraft, either of which would negatively impact our revenues and operating margins. 
+Our commercial aircraft production system is extremely complex. Operational issues, including delays or defects in supplier components, failure to meet internal performance plans, or delays or failures to achieve required regulatory certifications, could result in significant out-of-sequence work and increased production costs, as well as delayed deliveries to customers, impacts to aircraft performance and/or increased warranty or fleet support costs. 
+If our commercial airplanes fail to satisfy performance and reliability requirements, we could face additional costs and/or lower revenues. 
+Developing and manufacturing commercial aircraft that meet or exceed our performance and reliability standards, as well as those of customers and regulatory agencies, can be costly and technologically challenging. These challenges are particularly significant with newer aircraft programs. Any failure of any Boeing aircraft to satisfy performance or reliability requirements could result in disruption to our operations, higher costs and/or lower revenues.
+Changes in levels of U.S. government defense spending or overall acquisition priorities could negatively impact our financial position and results of operations. 
+We derive a substantial portion of our revenue from the U.S. government, primarily from defense related programs with the United States Department of Defense (
+U.S. DoD
+). Levels of U.S. defense spending are very difficult to predict and may be impacted by numerous factors such as the political environment, U.S. 
+6
+Table of Contents
+foreign policy, macroeconomic conditions and the ability of the U.S. government to enact relevant legislation such as authorization and appropriations bills. 
+The Bipartisan Budget Act of 2018 raised preexisting spending caps for fiscal years 2018 and 2019 (FY18 and FY19). The consolidated spending bills signed into law in September 2018 provide defense funding for FY19. However, other departments and agencies, including the National Aeronautics and Space Administration (NASA) and the Federal Aviation Administration (FAA), are being temporarily funded at FY18 levels. Failure to enact a Continuing Resolution or FY19 appropriations by February 15, 2019 would result in a partial government shutdown affecting these departments and agencies. Such a shutdown could impact the Company’s operations. In addition, reduced discretionary spending limits initially enacted in 2011 would take effect again in fiscal years 2020 and 2021 (FY20 and FY21) unless Congress acts to raise the spending caps or to repeal or suspend the law establishing the reduced limits. As a result, continued budget uncertainty and the risk of future sequestration cuts remain and it is likely that U.S. government discretionary spending levels will continue to be subject to pressure.
+In addition, there continues to be significant uncertainty with respect to future program-level appropriations for the 
+U.S. DoD
+ and other government agencies (including NASA) within the overall budgetary framework described above. While the House and Senate Appropriations Committees included funding for Boeing’s major programs, such as F/A-18 Super Hornet, CH-47 Chinook, AH-64 Apache, V-22 Osprey, KC-46A Pegasus Tanker and P-8 Poseidon, in their final FY19 defense appropriations, uncertainty remains about how defense budgets in FY20 and beyond will affect Boeing’s programs. Future budget cuts or investment priority changes, including changes associated with the authorizations and appropriations process could result in reductions, cancellations, and/or delays of existing contracts or programs. Any of these impacts could have a material effect on the results of the Company’s operations, financial position and/or cash flows. 
+In addition, as a result of the significant ongoing uncertainty with respect to both U.S. defense spending levels and the nature of the threat environment, we expect the 
+U.S. DoD
+ to continue to emphasize cost-cutting and other efficiency initiatives in its procurement processes. If we can no longer adjust successfully to these changing acquisition priorities and/or fail to meet affordability targets set by the 
+U.S. DoD
+ customer, our revenues and market share would be further impacted.
+We conduct a significant portion of our business pursuant to U.S. government contracts, which are subject to unique risks.
+In 
+2018
+,
+ 
+31%
+ of our revenues were earned pursuant to U.S. government contracts, which include foreign military sales (FMS) through the U.S. government. Business conducted pursuant to such contracts is subject to extensive procurement regulations and other unique risks.
+Our sales to the U.S. government are subject to extensive procurement regulations, and changes to those regulations could increase our costs. 
+New procurement regulations, or changes to existing requirements, could increase our compliance costs or otherwise have a material impact on the operating margins of our BDS and BGS businesses. These requirements may result in increased compliance costs, and we could be subject to additional costs in the form of withheld payments and/or reduced future business if we fail to comply with these requirements in the future. Compliance costs attributable to current and potential future procurement regulations such as these could negatively impact our financial condition and operating results.
+The U.S. government may modify, curtail or terminate one or more of our contracts.
+ The U.S. government contracting party may modify, curtail or terminate its contracts and subcontracts with us, without prior notice and either at its convenience or for default based on performance. In addition, funding pursuant to our U.S. government contracts may be reduced or withheld as part of the U.S. Congressional appropriations process due to fiscal constraints, changes in U.S. national security strategy and/or priorities or other 
+7
+Table of Contents
+reasons. Further uncertainty with respect to ongoing programs could also result in the event that the U.S. government finances its operations through temporary funding measures such as “continuing resolutions” rather than full-year appropriations. Any loss or anticipated loss or reduction of expected funding and/or modification, curtailment, or termination of one or more large programs could have a material adverse effect on our earnings, cash flow and/or financial position.
+We are subject to U.S. government inquiries and investigations, including periodic audits of costs that we determine are reimbursable under U.S. government contracts.
+ U.S. government agencies, including the Defense Contract Audit Agency and the Defense Contract Management Agency, routinely audit government contractors. These agencies review our performance under contracts, cost structure and compliance with applicable laws, regulations, and standards, as well as the adequacy of and our compliance with our internal control systems and policies. Any costs found to be misclassified or inaccurately allocated to a specific contract will be deemed non-reimbursable, and to the extent already reimbursed, must be refunded. Any inadequacies in our systems and policies could result in withholds on billed receivables, penalties and reduced future business. Furthermore, if any audit, inquiry or investigation uncovers improper or illegal activities, we could be subject to civil and criminal penalties and administrative sanctions, including termination of contracts, forfeiture of profits, suspension of payments, fines, and suspension or debarment from doing business with the U.S. government. We also could suffer reputational harm if allegations of impropriety were made against us, even if such allegations are later determined to be false.
+We enter into fixed-price contracts which could subject us to losses if we have cost overruns.
+Our BDS and BGS defense businesses generated approximately 
+65%
+ and 
+77%
+ of their 
+2018
+ revenues from fixed-price contracts. While fixed-price contracts enable us to benefit from performance improvements, cost reductions and efficiencies, they also subject us to the risk of reduced margins or incurring losses if we are unable to achieve estimated costs and revenues. If our estimated costs exceed our estimated price, we recognize reach-forward losses which can significantly affect our reported results. For example, during 2018, we recorded reach-forward losses totaling 
+$736 million
+ on the 
+USAF KC-46A Tanker
+ contract primarily reflecting higher estimated costs associated with certification, testing and change incorporation on aircraft, as well as higher than expected effort to meet customer requirements in order to support delivery of the initial aircraft. In addition, in 2018, in connection with winning the T-X and MQ-25 Stingray competitions, we recorded a loss of $400 million associated with options for 346 T-X Trainer aircraft and a loss of $291 million related to the MQ-25 Stingray Engineering, Manufacturing and Development (EMD) contract. The long term nature of many of our contracts makes the process of estimating costs and revenues on fixed-price contracts inherently risky. Fixed-price contracts often contain price incentives and penalties tied to performance which can be difficult to estimate and have significant impacts on margins. In addition, some of our contracts have specific provisions relating to cost, schedule and performance.
+Fixed-price development contracts are generally subject to more uncertainty than fixed-price production contracts. Many of these development programs have highly complex designs. In addition, technical or quality issues that arise during development could lead to schedule delays and higher costs to complete, which could result in a material charge or otherwise adversely affect our financial condition. Examples of significant BDS fixed-price development contracts include Commercial Crew, Saudi F-15, USAF 
+KC-46A Tanker
+, T-X Trainer, VC-25B Presidential Aircraft, MQ-25 Stingray, and commercial and military satellites.
+We enter into cost-type contracts which also carry risks.
+Our BDS and BGS defense businesses generated approximately 
+35%
+ and 
+23%
+ of their 
+2018
+ revenues from cost-type contracting arrangements. Some of these are development programs that have complex design and technical challenges. These cost-type programs typically have award or incentive fees that are subject to uncertainty and may be earned over extended periods. In these cases the associated financial risks are primarily in reduced fees, lower profit rates or program cancellation if cost, schedule or technical 
+8
+Table of Contents
+performance issues arise. Programs whose contracts are primarily cost-type include 
+GMD
+, Proprietary and 
+SLS
+ programs.
+We enter into contracts that include in-orbit incentive payments that subject us to risks.
+Contracts in the commercial satellite industry and certain government satellite contracts include in-orbit incentive payments. These in-orbit payments may be paid over time after final satellite acceptance or paid in full prior to final satellite acceptance. In both cases, the in-orbit incentive payment is at risk if the satellite does not perform to specifications for up to 15 years after acceptance. The net present value of in-orbit incentive fees we ultimately expect to realize is recognized as revenue in the construction period. If the satellite fails to meet contractual performance criteria, customers will not be obligated to continue making in-orbit payments and/or we may be required to provide refunds to the customer and incur significant charges.
+Our ability to deliver products and services that satisfy customer requirements is heavily dependent on the performance and financial stability of our subcontractors and suppliers, as well as on the availability of raw materials and other components.
+We rely on other companies including U.S. and non-U.S. subcontractors and suppliers to provide and produce raw materials, integrated components and sub-assemblies, and production commodities and to perform some of the services that we provide to our customers. If one or more of our suppliers or subcontractors experiences financial difficulties, delivery delays or other performance problems, we may be unable to meet commitments to our customers or incur additional costs. For example, the 737 program experienced supply chain disruptions in 2018 that impacted the timing of certain deliveries during the year. In addition, if one or more of the raw materials on which we depend (such as aluminum, titanium or composites) becomes unavailable or is available only at very high prices, we may be unable to deliver one or more of our products in a timely fashion or at budgeted costs. In some instances, we depend upon a single source of supply. Any service disruption from one of these suppliers, either due to circumstances beyond the supplier’s control, such as geo-political developments, or as a result of performance problems or financial difficulties, could have a material adverse effect on our ability to meet commitments to our customers or increase our operating costs.
+We use estimates in accounting for many contracts and programs. Changes in our estimates could adversely affect our future financial results.
+Contract and program accounting require judgment relative to assessing risks, estimating revenues and costs and making assumptions for schedule and technical issues. Due to the size and nature of many of our contracts and programs, the estimation of total revenues and cost at completion is complicated and subject to many variables. Assumptions have to be made regarding the length of time to complete the contract or program because costs also include expected increases in wages and employee benefits, material prices and allocated fixed costs. Incentives or penalties related to performance on contracts are considered in estimating sales and profit rates, and are recorded when there is sufficient information for us to assess anticipated performance. Suppliers’ assertions are also assessed and considered in estimating costs and profit rates. Estimates of award fees are also used in sales and profit rates based on actual and anticipated awards.
+With respect to each of our commercial aircraft programs, inventoriable production costs (including overhead), program tooling and other non-recurring costs and routine warranty costs are accumulated and charged as cost of sales by program instead of by individual units or contracts. A program consists of the estimated number of units (accounting quantity) of a product to be produced in a continuing, long-term production effort for delivery under existing and anticipated contracts limited by the ability to make reasonably dependable estimates. To establish the relationship of sales to cost of sales, program 
+9
+Table of Contents
+accounting requires estimates of (a) the number of units to be produced and sold in a program, (b) the period over which the units can reasonably be expected to be produced and (c) the units’ expected sales prices, production costs, program tooling and other non-recurring costs, and routine warranty costs for the total program. Several factors determine accounting quantity, including firm orders, letters of intent from prospective customers and market studies. Changes to customer or model mix, production costs and rates, learning curve, changes to price escalation indices, costs of derivative aircraft, supplier performance, customer and supplier negotiations/settlements, supplier claims and/or certification issues can impact these estimates. Any such change in estimates relating to program accounting may adversely affect future financial performance.
+Because of the significance of the judgments and estimation processes described above, materially different sales and profit amounts could be recorded if we used different assumptions or if the underlying circumstances were to change. Changes in underlying assumptions, circumstances or estimates may adversely affect future period financial performance. For additional information on our accounting policies for recognizing sales and profits, see our discussion under “Management’s Discussion and Analysis – Critical Accounting Policies – Contract Accounting/Program Accounting” on pages 
+43
+ – 
+44
+ and Note 
+1
+ to our Consolidated Financial Statements on pages 
+54
+ – 
+66
+ of this Form 10-K.
+Competition within our markets and with respect to the products we sell may reduce our future contracts and sales.
+The markets in which we operate are highly competitive and one or more of our competitors may have more extensive or more specialized engineering, manufacturing and marketing capabilities than we do in some areas. In our Commercial Airplanes business, we anticipate increasing competition among non-U.S. aircraft manufacturers of commercial jet aircraft. In our BDS business, we anticipate that the effects of defense industry consolidation, fewer large and new programs and new priorities, including near and long-term cost competitiveness, of our 
+U.S. DoD
+ and non-U.S. customers will intensify competition for many of our BDS products. Our BGS segment faces competition from many of the same strong U.S. and non-U.S. competitors facing BCA and BDS. Furthermore, we are facing increased international competition and cross-border consolidation of competition. There can be no assurance that we will be able to compete successfully against our current or future competitors or that the competitive pressures we face will not result in reduced revenues and market share.
+We derive a significant portion of our revenues from non-U.S. sales and are subject to the risks of doing business in other countries.
+In 
+2018
+, non-U.S. customers, which includes FMS, accounted for approximately 
+56%
+ of our revenues. We expect that non-U.S. sales will continue to account for a significant portion of our revenues for the foreseeable future. As a result, we are subject to risks of doing business internationally, including:
+•
+changes in regulatory requirements;
+•
+U.S. and non-U.S. government policies, including requirements to expend a portion of program funds locally and governmental industrial cooperation or participation requirements;
+•
+fluctuations in international currency exchange rates;
+•
+volatility in international political and economic environments and changes in non-U.S. national priorities and budgets, which can lead to delays or fluctuations in orders;
+•
+the complexity and necessity of using non-U.S. representatives and consultants;
+•
+the uncertainty of the ability of non-U.S. customers to finance purchases, including the availability of financing from the Export-Import Bank of the United States;
+•
+uncertainties and restrictions concerning the availability of funding credit or guarantees;
+10
+Table of Contents
+•
+imposition of domestic and international taxes, export controls, tariffs, embargoes, sanctions and other trade restrictions;
+•
+the difficulty of management and operation of an enterprise spread over many countries;
+•
+compliance with a variety of non-U.S. laws, as well as U.S. laws affecting the activities of U.S. companies abroad; and
+•
+unforeseen developments and conditions, including terrorism, war, epidemics and international tensions and conflicts.
+While the impact of these factors is difficult to predict, any one or more of these factors could adversely affect our operations in the future.
+Unauthorized access to our or our customers’ information and systems could negatively impact our business.
+We face certain security threats, including threats to the confidentiality, availability and integrity of our data and systems. We maintain an extensive network of technical security controls, policy enforcement mechanisms, monitoring systems and management oversight in order to address these threats. While these measures are designed to prevent, detect and respond to unauthorized activity in our systems, certain types of attacks, including cyber-attacks, could result in significant financial or information losses and/or reputational harm. In addition, we manage information and information technology systems for certain customers. Many of these customers face similar security threats. If we cannot prevent the unauthorized access, release and/or corruption of our customers’ confidential, classified or personally identifiable information, our reputation could be damaged, and/or we could face financial losses.
+The outcome of litigation and of government inquiries and investigations involving our business is unpredictable and an adverse decision in any such matter could have a material effect on our financial position and results of operations.
+We are involved in a number of litigation matters. These matters may divert financial and management resources that would otherwise be used to benefit our operations. No assurances can be given that the results of these matters will be favorable to us. An adverse resolution of any of these lawsuits, or future lawsuits, could have a material impact on our financial position and results of operations. In addition, we are subject to extensive regulation under the laws of the United States and its various states, as well as other jurisdictions in which we operate. As a result, we are sometimes subject to government inquiries and investigations of our business due, among other things, to our business relationships with the U.S. government, the heavily regulated nature of our industry, and in the case of environmental proceedings, our current or past ownership of certain property. Any such inquiry or investigation could potentially result in an adverse ruling against us, which could have a material impact on our financial position and results of operations.
+A significant portion of our customer financing portfolio is concentrated among certain customers and in certain types of Boeing aircraft, which exposes us to concentration risks.
+A significant portion of our customer financing portfolio is concentrated among certain customers and in distinct geographic regions. Our portfolio is also concentrated by varying degrees across Boeing aircraft product types, most notably 717 and 747-8 aircraft, and among customers that we believe have less than investment-grade credit. If one or more customers holding a significant portion of our portfolio assets experiences financial difficulties or otherwise defaults on or does not renew its leases with us at their expiration, and we are unable to redeploy the aircraft on reasonable terms, or if the types of aircraft that are concentrated in our portfolio suffer greater than expected declines in value, our earnings, cash flows and/or financial position could be materially adversely affected.
+11
+Table of Contents
+We may be unable to obtain debt to fund our operations and contractual commitments at competitive rates, on commercially reasonable terms or in sufficient amounts.
+We depend, in part, upon the issuance of debt to fund our operations and contractual commitments. As of 
+December 31, 2018 and 2017
+, our airplane financing commitments totaled 
+$19,462 million
+ and 
+$10,221 million
+. If we require additional funding in order to fund outstanding financing commitments or meet other business requirements, our market liquidity may not be sufficient. A number of factors could cause us to incur increased borrowing costs and to have greater difficulty accessing public and private markets for debt. These factors include disruptions or declines in the global capital markets and/or a decline in our financial performance, outlook or credit ratings. The occurrence of any or all of these events may adversely affect our ability to fund our operations and contractual or financing commitments.
+We may not realize the anticipated benefits of mergers, acquisitions, joint ventures/strategic alliances or divestitures.
+As part of our business strategy, we may merge with or acquire businesses and/or form joint ventures and strategic alliances. For example, in 2018 we completed the acquisition of KLX Inc., a provider of aviation parts and services. Whether we realize the anticipated benefits from these acquisitions and related activities depends, in part, upon our ability to integrate the operations of the acquired business, the performance of the underlying product and service portfolio, and the performance of the management team and other personnel of the acquired operations. Accordingly, our financial results could be adversely affected by unanticipated performance issues, legacy liabilities, transaction-related charges, amortization of expenses related to intangibles, charges for impairment of long-term assets, credit guarantees, partner performance and indemnifications. Consolidations of joint ventures could also impact our reported results of operations or financial position. While we believe that we have established appropriate and adequate procedures and processes to mitigate these risks, there is no assurance that these transactions will be successful. We also may make strategic divestitures from time to time. These transactions may result in continued financial involvement in the divested businesses, such as through guarantees or other financial arrangements, following the transaction. Nonperformance by those divested businesses could affect our future financial results through additional payment obligations, higher costs or asset write-downs.
+Our insurance coverage may be inadequate to cover all significant risk exposures.
+We are exposed to liabilities that are unique to the products and services we provide. We maintain insurance for certain risks and, in some circumstances, we may receive indemnification from the U.S. government. The amount of our insurance coverage may not cover all claims or liabilities and we may be forced to bear substantial costs. For example, liabilities arising from the use of certain of our products, such as aircraft technologies, missile systems, border security systems, anti-terrorism technologies, and/or air traffic management systems may not be insurable on commercially reasonable terms. While some of these products are shielded from liability within the U.S. under the SAFETY Act provisions of the 2002 Homeland Security Act, no such protection is available outside the U.S., potentially resulting in significant liabilities. The amount of insurance coverage we maintain may be inadequate to cover these or other claims or liabilities.
+Business disruptions could seriously affect our future sales and financial condition or increase our costs and expenses.
+Our business may be impacted by disruptions including threats to physical security, information technology or cyber-attacks or failures, damaging weather or other acts of nature and pandemics or other public health crises. Any of these disruptions could affect our internal operations or our ability to deliver products and services to our customers. Any significant production delays, or any destruction, manipulation or improper 
+12
+Table of Contents
+use of our data, information systems or networks could impact our sales, increase our expenses and/or have an adverse effect on the reputation of Boeing and of our products and services.
+Some of our and our suppliers’ workforces are represented by labor unions, which may lead to work stoppages.
+Approximately 
+54,000
+ employees, which constitute 
+35%
+ of our total workforce, were union represented as of 
+December 31, 2018
+. We experienced a work stoppage in 2008 when a labor strike halted commercial aircraft and certain BDS program production. We may experience additional work stoppages in the future, which could adversely affect our business. We cannot predict how stable our relationships, currently with 
+11
+ U.S. labor organizations and 
+13
+ non-U.S. labor organizations, will be or whether we will be able to meet the unions’ requirements without impacting our financial condition. The unions may also limit our flexibility in dealing with our workforce. Union actions at suppliers can also affect us. Work stoppages and instability in our union relationships could delay the production and/or development of our products, which could strain relationships with customers and cause a loss of revenues which would adversely affect our operations.
+Substantial pension and other postretirement benefit obligations have a material impact on our earnings, shareholders’ equity and cash flows from operations, and could have significant adverse impacts in future periods.
+The majority of our employees have earned benefits under defined benefit pension plans. Potential pension contributions include both mandatory amounts required under the 
+Employee Retirement Income Security Act
+ and discretionary contributions to improve the plans
+'
+ funded status. The extent of future contributions depends heavily on market factors such as the discount rate and the actual return on plan assets. We estimate future contributions to these plans using assumptions with respect to these and other items. Changes to those assumptions
+ 
+could have a significant effect on future contributions as well as on our annual pension costs and/or result in a significant change to shareholders
+'
+ equity. For U.S. government contracts, we allocate pension costs to individual contracts based on U.S. Cost Accounting Standards which can also affect contract profitability. We also provide other postretirement benefits to certain of our employees, consisting principally of health care coverage for eligible retirees and qualifying dependents. Our estimates of future costs associated with these benefits are also subject to assumptions, including estimates of the level of medical cost increases. For a discussion regarding how our financial statements can be affected by pension and other postretirement plan accounting policies, see 
+“
+Management
+'
+s Discussion and Analysis
+-
+Critical Accounting Policies
+-
+Pension Plans
+”
+ on page 
+45
+ of this Form 10-K. Although Generally Accepted Accounting Principles in the United States of America (GAAP) expense and pension or other postretirement benefit contributions are not directly related, the key economic factors that affect GAAP expense would also likely affect the amount of cash or stock we would contribute to our plans.
+13
+Table of Contents
+Our operations expose us to the risk of material environmental liabilities.
+We are subject to various U.S. federal, state, local and non-U.S. laws and regulations related to environmental protection, including the discharge, treatment, storage, disposal and remediation of hazardous substances and wastes. We could incur substantial costs, including cleanup costs, fines and civil or criminal sanctions, as well as third-party claims for property damage or personal injury, if we were to violate or become liable under environmental laws or regulations. In some cases, we may be subject to such costs due to environmental impacts attributable to our current or past manufacturing operations or the operations of companies we have acquired. In other cases, we may become subject to such costs due to an indemnification agreement between us and a third party relating to such environmental liabilities. In addition, new laws and regulations, more stringent enforcement of existing laws and regulations, the discovery of previously unknown contamination or the imposition of new remediation requirements could result in additional costs. For additional information relating to environmental contingencies, see Note 
+14
+ to our Consolidated Financial Statements.

@@ -123,6 +123,13 @@ def main() -> None:
         """
     )
 
+    st.info(
+        "**Start here:** Select **Watchlist year = 2019** to see Boeing's 737 MAX grounding and "
+        "Meta's post-Cambridge Analytica regulatory overhaul flagged in real-time. "
+        "Use **Drift Timeline → BA** to visualise the z-score spike, and **Text Diff → BA, 2018→2019** "
+        "to see exactly which risk language changed."
+    )
+
     scores = load_drift_scores()
 
     if scores.empty:
@@ -138,7 +145,8 @@ def main() -> None:
         selected_sectors = st.multiselect("Sector", all_sectors, default=all_sectors)
 
         all_years = sorted(scores["year"].dropna().astype(int).unique())
-        selected_year = st.selectbox("Watchlist year", all_years, index=len(all_years) - 1)
+        default_year_index = all_years.index(2019) if 2019 in all_years else len(all_years) - 1
+        selected_year = st.selectbox("Watchlist year", all_years, index=default_year_index)
 
         z_threshold = st.slider("Drift flag threshold (z-score)", -4.0, -1.0, -2.0, 0.1)
 
@@ -228,7 +236,7 @@ def main() -> None:
                 title=f"{selected_ticker} — Year-over-Year Item 1A Cosine Similarity",
                 xaxis_title="Fiscal Year",
                 yaxis_title="Cosine Similarity",
-                yaxis={"range": [0.5, 1.05]},
+                yaxis={"autorange": True},
                 legend={"orientation": "h"},
                 height=400,
             )

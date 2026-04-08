@@ -21,14 +21,14 @@
 
 - **RiskDrift** is a working NLP pipeline that detects statistically significant shifts in SEC 10-K Item 1A (Risk Factors) language using FinBERT embeddings and intra-company z-score anomaly detection, surfacing risk regime changes before they manifest in market outcomes.
 - The system encodes each year's risk section into a 768-dimensional FinBERT vector via sliding-window mean-pooling, computes year-over-year cosine similarity, and flags years where similarity falls more than 2 standard deviations below each company's own historical baseline — self-calibrating to individual filing behaviour rather than cross-sectional comparison.
-- A backtested long-short strategy (short drifted companies, long stable-language companies, 6-month holding period) demonstrates that drift flags are associated with statistically significant negative forward returns, validating the signal's alpha-generating potential.
+- A long-short backtest framework (short drifted companies, long stable-language companies, 6-month holding period) is implemented and validated on the sample universe; all 6 flagged company-years preceded documented equity drawdowns, with a clear path to computing Sharpe and Information Ratios at scale across 100+ S&P 500 names.
 - All data is sourced from free public APIs (SEC EDGAR, Yahoo Finance); all models are open-source (ProsusAI/finbert on Hugging Face); the complete pipeline runs end-to-end from a single command within the $20 reproducibility threshold.
 
 ---
 
 ## 2. Repository & Deployment Links
 
-**GitHub Repository:** [to be added upon push]
+**GitHub Repository:** https://github.com/Alexios99/riskdrift
 **Live Demo:** `streamlit run src/dashboard/app.py` (local) or [hosted URL to be added]
 
 > Repository is public and released under MIT License. All code, pre-processed sample data, and cached embeddings for the sample universe are included.
