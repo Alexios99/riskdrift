@@ -4,7 +4,7 @@
 
 RiskDrift is an NLP pipeline that detects statistically significant shifts in SEC 10-K Item 1A (Risk Factors) language using FinBERT embeddings and intra-company rolling z-score anomaly detection. It flags companies whose risk narrative has changed unusually relative to their own historical baseline — surfacing regime changes before they manifest in market outcomes. Built for the CFA Institute AI Investment Challenge 2025–2026 (Stage 2) by team Alpha Turing, University of Manchester.
 
-**Status:** Pipeline complete and validated on real data. Dashboard live. Currently in **presentation prep mode**.
+**Status:** Pipeline complete and validated on real data. Dashboard live. Signal enhancements in progress on branch `feat/signal-enhancements` (not yet merged to main).
 
 **GitHub:** https://github.com/Alexios99/riskdrift  
 **Live Demo:** https://riskdrift-ffrv65ruzick8n9r8uisna.streamlit.app/
@@ -20,6 +20,22 @@ Key reading:
 - `docs/Summary.md` — high-level project summary and pitch structure
 - `docs/Codebase Walkthrough.md` — module-by-module tour of the code
 - `docs/Architecture Overview.md` — system architecture with data flow diagram
+
+### Active Branch: `feat/signal-enhancements`
+
+The following enhancements are committed on `feat/signal-enhancements` and not yet merged to `main`:
+
+| Change | File | Description |
+|--------|------|-------------|
+| `stability_flag` | `drift_scorer.py` | Flags z > +2.0 — unusually stable language relative to company baseline. Only real trigger: META 2021 (z = +2.83). |
+| Sortino, Calmar, win rates, flag rate | `backtest.py` | Additional backtest metrics added to `run_backtest()` |
+| `tune_threshold()` | `backtest.py` | Grid search over z thresholds [-1.0 → -3.5], ranked by return spread — in-sample sensitivity table |
+| `sector_contagion_score()` | `sector_aggregator.py` | Fraction of companies flagged per sector per year; ≥30% = systemic signal |
+| `classify_signal_type()` | `sector_aggregator.py` | Labels each drift flag idiosyncratic vs systemic |
+| Dashboard enhancements | `app.py` | 5-metric KPI bar, stability flag toggle, blue triangle markers on timeline, sector flag counts chart, contagion table |
+| BOCPD dependency | `requirements.txt` | `bayesian-changepoint-detection` added; full dashboard wiring still pending |
+
+To switch to this branch: `git checkout feat/signal-enhancements`
 
 ---
 
