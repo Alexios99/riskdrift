@@ -162,6 +162,89 @@ def sector_flag_counts(
     return pivot
 
 
+def sector_contagion_score(
+    drift_scores: pd.DataFrame,
+    sector_map: dict[str, str] | None = None,
+) -> pd.DataFrame:
+    """Compute fraction of companies flagged per sector per year.
+
+    A contagion score > 0.3 (30%+ of the sector flagged in the same year)
+    indicates a potential systemic signal rather than idiosyncratic company risk.
+
+    Parameters
+    ----------
+    drift_scores:
+        Drift scores DataFrame with ticker, year, drift_flag columns.
+    sector_map:
+        Ticker-to-sector mapping.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns: sector, year, n_total, n_flagged, contagion_score.
+    """
+    df = add_sector(drift_scores, sector_map)
+    valid = df.dropna(subset=["z_score"])
+
+    totals = valid.groupby(["sector", "year"])["ticker"].count().reset_index()
+    totals.columns = ["sector", "year", "n_total"]
+
+    flagged = valid[valid["drift_flag"] == True].groupby(["sector", "year"])["ticker"].count().reset_index()  # noqa: E712
+    flagged.columns = ["sector", "year", "n_flagged"]
+
+    result = totals.merge(flagged, on=["sector", "year"], how="left")
+    result["n_flagged"] = result["n_flagged"].fillna(0).astype(int)
+    result["contagion_score"] = result["n_flagged"] / result["n_total"]
+
+    return result.sort_values(["year", "contagion_score"], ascending=[True, False]).reset_index(drop=True)
+
+
+def classify_signal_type(
+    drift_scores: pd.DataFrame,
+    sector_map: dict[str, str] | None = None,
+) -> pd.DataFrame:
+    """Classify each drift flag as idiosyncratic or systemic.
+
+    Idiosyncratic: only one company in a sector flagged in a given year.
+    Systemic: two or more companies in the same sector flagged in the same year.
+
+    Parameters
+    ----------
+    drift_scores:
+        Drift scores DataFrame with ticker, year, drift_flag columns.
+    sector_map:
+        Ticker-to-sector mapping.
+
+    Returns
+    -------
+    pd.DataFrame
+        Input DataFrame with an added 'signal_type' column.
+        Values: 'systemic', 'idiosyncratic', or None (unflagged rows).
+    """
+    df = add_sector(drift_scores, sector_map).copy()
+
+    flags_per_sector_year = (
+        df[df["drift_flag"] == True]  # noqa: E712
+        .groupby(["sector", "year"])["ticker"]
+        .count()
+        .reset_index()
+        .rename(columns={"ticker": "sector_flag_count"})
+    )
+
+    df = df.merge(flags_per_sector_year, on=["sector", "year"], how="left")
+    df["sector_flag_count"] = df["sector_flag_count"].fillna(0).astype(int)
+
+    def _classify(row: pd.Series) -> str | None:
+        if not row["drift_flag"]:
+            return None
+        return "systemic" if row["sector_flag_count"] >= 2 else "idiosyncratic"
+
+    df["signal_type"] = df.apply(_classify, axis=1)
+    df = df.drop(columns=["sector_flag_count"])
+
+    return df
+
+
 def top_drifters(
     drift_scores: pd.DataFrame,
     year: int,

@@ -28,7 +28,13 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.analysis.event_annotator import MACRO_EVENTS, annotate_drift_chart
-from src.analysis.sector_aggregator import add_sector, sector_drift_heatmap
+from src.analysis.sector_aggregator import (
+    add_sector,
+    classify_signal_type,
+    sector_contagion_score,
+    sector_drift_heatmap,
+    sector_flag_counts,
+)
 from src.pipeline.drift_scorer import score_all
 
 logger = logging.getLogger(__name__)
@@ -137,26 +143,38 @@ def main() -> None:
         return
 
     scores = add_sector(scores)
+    scores = classify_signal_type(scores)
 
     # ---------------------------------------------------------------------------
     # KPI metrics bar
     # ---------------------------------------------------------------------------
     all_scored = scores.dropna(subset=["z_score"])
-    all_flagged = scores[scores["drift_flag"] == True]
+    all_flagged = scores[scores["drift_flag"] == True]  # noqa: E712
+    all_stable = scores[scores.get("stability_flag", pd.Series(False, index=scores.index)) == True]  # noqa: E712
+    if "stability_flag" in scores.columns:
+        all_stable = scores[scores["stability_flag"] == True]  # noqa: E712
+    else:
+        all_stable = pd.DataFrame()
+
     fwd_flagged = all_flagged["forward_return_6m"].dropna() if "forward_return_6m" in scores.columns else pd.Series(dtype=float)
-    fwd_unflagged = scores[scores["drift_flag"] == False]["forward_return_6m"].dropna() if "forward_return_6m" in scores.columns else pd.Series(dtype=float)
+    fwd_unflagged = scores[scores["drift_flag"] == False]["forward_return_6m"].dropna() if "forward_return_6m" in scores.columns else pd.Series(dtype=float)  # noqa: E712
     return_spread = (fwd_flagged.mean() - fwd_unflagged.mean()) if (len(fwd_flagged) > 0 and len(fwd_unflagged) > 0) else None
     strongest = all_flagged.loc[all_flagged["z_score"].idxmin()] if not all_flagged.empty else None
 
-    k1, k2, k3, k4 = st.columns(4)
+    k1, k2, k3, k4, k5 = st.columns(5)
     k1.metric("Filings Analysed", len(all_scored))
     k2.metric("Drift Flags", len(all_flagged))
     k3.metric(
+        "Stability Flags",
+        len(all_stable),
+        help="Companies with unusually stable language (z > +2.0). May indicate risk resolution or deliberate scrubbing.",
+    )
+    k4.metric(
         "Return Spread (flagged vs stable)",
         f"{return_spread:+.1%}" if return_spread is not None else "N/A",
         help="Mean 6m forward return: flagged minus unflagged companies",
     )
-    k4.metric(
+    k5.metric(
         "Strongest Signal",
         f"{strongest['ticker']} {int(strongest['year'])}" if strongest is not None else "N/A",
         f"z = {strongest['z_score']:.1f}" if strongest is not None else "",
@@ -174,6 +192,10 @@ def main() -> None:
         selected_year = st.selectbox("Watchlist year", all_years, index=default_year_index)
 
         z_threshold = st.slider("Drift flag threshold (z-score)", -4.0, -1.0, -2.0, 0.1)
+
+        st.divider()
+        show_stability = st.checkbox("Show stability flags in watchlist", value=False,
+                                     help="Stability flags: z > +2.0 — unusually consistent language")
 
         st.divider()
         with st.expander("Event Calendar"):
@@ -209,12 +231,15 @@ def main() -> None:
         if not flagged.empty:
             st.error(f"🚨 {len(flagged)} drift flag(s) detected")
             cols = ["ticker", "sector", "cosine_similarity", "z_score", "drift_flag"]
+            if "signal_type" in flagged.columns:
+                cols.append("signal_type")
             if "forward_return_6m" in flagged.columns:
                 cols.append("forward_return_6m")
-            display_df = flagged[cols].rename(columns={
+            display_df = flagged[[c for c in cols if c in flagged.columns]].rename(columns={
                 "cosine_similarity": "Cosine Sim",
                 "z_score": "Z-Score",
                 "drift_flag": "Flag",
+                "signal_type": "Signal Type",
                 "forward_return_6m": "6m Fwd Return",
             }).copy()
             display_df["Cosine Sim"] = display_df["Cosine Sim"].map("{:.4f}".format)
@@ -226,6 +251,20 @@ def main() -> None:
             st.dataframe(display_df, use_container_width=True)
         else:
             st.success("No drift flags for selected filters.")
+
+        if show_stability and "stability_flag" in year_df.columns:
+            stable_flagged = year_df[year_df["stability_flag"] == True]  # noqa: E712
+            if not stable_flagged.empty:
+                st.info(f"📊 {len(stable_flagged)} unusual stability flag(s) — language changed far less than historical baseline (z > +2.0). Interpret with caution: may indicate genuine risk resolution or deliberate language scrubbing.")
+                st.dataframe(
+                    stable_flagged[["ticker", "sector", "cosine_similarity", "z_score"]].rename(columns={
+                        "cosine_similarity": "Cosine Sim",
+                        "z_score": "Z-Score",
+                    }),
+                    use_container_width=True,
+                )
+            else:
+                st.info("No unusual stability flags this year.")
 
         st.subheader("All Companies (ranked by z-score)")
         display_cols = ["ticker", "sector", "cosine_similarity", "z_score", "rolling_mean", "rolling_std"]
@@ -254,7 +293,7 @@ def main() -> None:
                     line={"dash": "dash", "color": "#aec7e8"},
                 ))
 
-            # Mark flagged years
+            # Drift flag markers — red X
             flagged_yr = ticker_df[ticker_df["z_score"] < z_threshold]
             if not flagged_yr.empty:
                 fig.add_trace(go.Scatter(
@@ -262,6 +301,16 @@ def main() -> None:
                     mode="markers", name="Drift Flag",
                     marker={"symbol": "x", "size": 14, "color": "red"},
                 ))
+
+            # Stability flag markers — blue triangle
+            if "stability_flag" in ticker_df.columns:
+                stable_yr = ticker_df[ticker_df["stability_flag"] == True]  # noqa: E712
+                if not stable_yr.empty:
+                    fig.add_trace(go.Scatter(
+                        x=stable_yr["year"], y=stable_yr["cosine_similarity"],
+                        mode="markers", name="Unusual Stability",
+                        marker={"symbol": "triangle-up", "size": 14, "color": "#1f77b4"},
+                    ))
 
             fig.update_layout(
                 title=f"{selected_ticker} — Year-over-Year Item 1A Cosine Similarity",
@@ -272,7 +321,6 @@ def main() -> None:
                 height=400,
             )
 
-            # Annotate with macro and sector events
             ticker_sector = (
                 ticker_df["sector"].iloc[0]
                 if "sector" in ticker_df.columns and not ticker_df.empty
@@ -286,13 +334,15 @@ def main() -> None:
             has_returns = "forward_return_6m" in ticker_df.columns and ticker_df["forward_return_6m"].notna().any()
 
             fig_z = go.Figure()
-            colors = ["red" if z < z_threshold else "steelblue" for z in ticker_df["z_score"]]
+            colors = ["red" if z < z_threshold else "#2ca02c" if (z > 2.0) else "steelblue" for z in ticker_df["z_score"]]
             fig_z.add_trace(go.Bar(
                 x=ticker_df["year"], y=ticker_df["z_score"],
                 name="Z-Score", marker_color=colors, yaxis="y1",
             ))
             fig_z.add_hline(y=z_threshold, line_dash="dash", line_color="red",
-                            annotation_text=f"Flag threshold ({z_threshold})", yref="y1")
+                            annotation_text=f"Drift threshold ({z_threshold})", yref="y1")
+            fig_z.add_hline(y=2.0, line_dash="dot", line_color="#1f77b4",
+                            annotation_text="Stability threshold (+2.0)", yref="y1")
 
             if has_returns:
                 ret_colors = ["#d62728" if v < 0 else "#2ca02c"
@@ -326,7 +376,10 @@ def main() -> None:
             )
             st.plotly_chart(fig_z, use_container_width=True)
             if has_returns:
-                st.caption("Green bars = positive 6m return after filing. Red bars = negative. Grouped with z-score to show signal → outcome relationship.")
+                st.caption(
+                    "Red z-bars = drift flag. Blue z-bars = unusual stability. "
+                    "Green/red return bars = positive/negative 6m outcome after filing."
+                )
         else:
             st.info("No z-score data available for this ticker.")
 
@@ -358,7 +411,7 @@ def main() -> None:
 
     # ---- Sector Heatmap ----------------------------------------------------
     with tab_heatmap:
-        st.subheader("Sector-Level Drift Heatmap (Mean Z-Score)")
+        st.subheader("Sector-Level Drift Heatmap")
 
         metric_option = st.radio("Metric", ["z_score", "cosine_similarity"], horizontal=True)
         heatmap_df = sector_drift_heatmap(filtered, metric=metric_option)
@@ -375,6 +428,34 @@ def main() -> None:
             st.plotly_chart(fig_heat, use_container_width=True)
         else:
             st.info("Insufficient data for heatmap with current filters.")
+
+        # Sector flag counts bar chart
+        flag_counts = sector_flag_counts(filtered)
+        if not flag_counts.empty:
+            st.subheader("Drift Flag Counts by Sector and Year")
+            fig_flags = px.bar(
+                flag_counts.reset_index().melt(id_vars="sector", var_name="year", value_name="flag_count"),
+                x="year", y="flag_count", color="sector", barmode="group",
+                title="Number of Drift Flags per Sector per Year",
+                labels={"flag_count": "Drift Flags", "year": "Fiscal Year"},
+            )
+            fig_flags.update_layout(height=380)
+            st.plotly_chart(fig_flags, use_container_width=True)
+
+        # Sector contagion score
+        contagion = sector_contagion_score(filtered)
+        systemic = contagion[contagion["contagion_score"] >= 0.3]
+        if not systemic.empty:
+            st.subheader("Systemic Risk Signals (Contagion Score ≥ 30%)")
+            st.caption("Sectors where ≥30% of companies were flagged in the same year — potential systemic rather than idiosyncratic risk.")
+            st.dataframe(
+                systemic[["sector", "year", "n_total", "n_flagged", "contagion_score"]].rename(columns={
+                    "contagion_score": "Contagion Score",
+                    "n_total": "Companies Tracked",
+                    "n_flagged": "Companies Flagged",
+                }),
+                use_container_width=True,
+            )
 
 
 if __name__ == "__main__":

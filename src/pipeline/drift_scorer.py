@@ -172,6 +172,12 @@ def compute_drift_scores(
     # Flag years where z-score indicates statistically significant drift
     df["drift_flag"] = (df["z_score"] < z_threshold) & (~df["insufficient_history"])
 
+    # Flag years where language became unusually stable relative to baseline.
+    # Positive z > +2.0 means the filing changed far less than historically expected —
+    # could indicate genuine risk resolution OR deliberate scrubbing of language.
+    # Treat as "Unusual Stability" requiring analyst review, not a directional signal.
+    df["stability_flag"] = (df["z_score"] > 2.0) & (~df["insufficient_history"])
+
     return df
 
 
