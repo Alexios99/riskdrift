@@ -27,6 +27,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.analysis.backtest import LONG_Z_THRESHOLD, SHORT_Z_THRESHOLD, run_backtest, tune_threshold
 from src.analysis.event_annotator import MACRO_EVENTS, annotate_drift_chart
 from src.analysis.sector_aggregator import (
     add_sector,
@@ -217,8 +218,8 @@ def main() -> None:
     # ---------------------------------------------------------------------------
     # Tab layout
     # ---------------------------------------------------------------------------
-    tab_watchlist, tab_timeline, tab_diff, tab_heatmap = st.tabs([
-        "Watchlist", "Drift Timeline", "Text Diff", "Sector Heatmap"
+    tab_watchlist, tab_timeline, tab_diff, tab_heatmap, tab_backtest = st.tabs([
+        "Watchlist", "Drift Timeline", "Text Diff", "Sector Heatmap", "Backtest"
     ])
 
     # ---- Watchlist ---------------------------------------------------------
@@ -456,6 +457,135 @@ def main() -> None:
                 }),
                 use_container_width=True,
             )
+
+
+    # ---- Backtest ----------------------------------------------------------
+    with tab_backtest:
+        st.subheader("Signal Backtest")
+        st.caption(
+            "Long-short backtest using drift flags as the short signal and stable language (z > −0.5) "
+            "as the long reference group. 6-month holding period. No transaction costs modelled."
+        )
+
+        has_returns = "forward_return_6m" in scores.columns and scores["forward_return_6m"].notna().any()
+
+        if not has_returns:
+            st.warning("No forward return data available. Run the pipeline with yfinance to generate returns.")
+        else:
+            # Build the two DataFrames run_backtest() expects from the single CSV
+            valid = scores.dropna(subset=["z_score", "forward_return_6m"]).copy()
+            valid = valid[~valid.get("insufficient_history", pd.Series(False, index=valid.index))]
+
+            forward_returns_df = valid[["ticker", "year", "forward_return_6m"]].rename(
+                columns={"forward_return_6m": "forward_return"}
+            )
+
+            metrics = run_backtest(valid, forward_returns_df)
+
+            if not metrics:
+                st.warning("Insufficient data to run backtest with current filters.")
+            else:
+                # ---- Metrics table -----------------------------------------
+                st.subheader("Performance Metrics")
+
+                metric_labels = {
+                    "long_return_6m":       ("Long Return (6m)",         "{:+.1%}"),
+                    "short_return_6m":      ("Short Return (6m)",        "{:+.1%}"),
+                    "long_short_spread_6m": ("L/S Spread (6m)",          "{:+.1%}"),
+                    "annualised_ls_return": ("Annualised L/S Return",    "{:+.1%}"),
+                    "sharpe_ratio":         ("Sharpe Ratio",             "{:.2f}"),
+                    "sortino_ratio":        ("Sortino Ratio",            "{:.2f}"),
+                    "calmar_ratio":         ("Calmar Ratio",             "{:.2f}"),
+                    "information_ratio":    ("Information Ratio",        "{:.2f}"),
+                    "hit_rate_shorts":      ("Hit Rate (shorts)",        "{:.1%}"),
+                    "long_win_rate":        ("Win Rate (longs)",         "{:.1%}"),
+                    "short_win_rate":       ("Win Rate (shorts)",        "{:.1%}"),
+                    "short_avg_win_6m":     ("Avg Win on Shorts (6m)",   "{:+.1%}"),
+                    "short_avg_loss_6m":    ("Avg Loss on Shorts (6m)",  "{:+.1%}"),
+                    "flag_rate":            ("Flag Rate",                "{:.1%}"),
+                    "max_drawdown":         ("Max Drawdown",             "{:.1%}"),
+                    "n_long_positions":     ("Long Positions",           "{:d}"),
+                    "n_short_positions":    ("Short Positions (flags)",  "{:d}"),
+                    "n_years":              ("Years with Both Legs",     "{:d}"),
+                }
+
+                rows = []
+                for key, (label, fmt) in metric_labels.items():
+                    val = metrics.get(key)
+                    if val is None or (isinstance(val, float) and np.isnan(val)):
+                        formatted = "N/A"
+                    elif isinstance(val, int):
+                        formatted = fmt.format(val)
+                    else:
+                        formatted = fmt.format(float(val))
+                    rows.append({"Metric": label, "Value": formatted})
+
+                metrics_df = pd.DataFrame(rows)
+                st.dataframe(metrics_df, use_container_width=True, hide_index=True)
+
+                st.caption(
+                    "⚠️ Small sample caveat: backtest covers 6 short positions and ~8 annual L/S observations. "
+                    "Sharpe, Sortino, and Calmar are directionally informative only — not statistically significant."
+                )
+
+                # ---- Return distribution chart -----------------------------
+                st.subheader("Return Distribution — Flagged vs Stable")
+
+                flagged_rets = valid[valid["z_score"] < SHORT_Z_THRESHOLD][["ticker", "year", "forward_return_6m"]].copy()
+                stable_rets = valid[valid["z_score"] > LONG_Z_THRESHOLD][["ticker", "year", "forward_return_6m"]].copy()
+                flagged_rets["group"] = "Drift Flag (short)"
+                stable_rets["group"] = "Stable (long)"
+
+                dist_df = pd.concat([flagged_rets, stable_rets], ignore_index=True)
+                dist_df["label"] = dist_df["ticker"] + " " + dist_df["year"].astype(int).astype(str)
+
+                fig_dist = px.bar(
+                    dist_df.sort_values("forward_return_6m"),
+                    x="label",
+                    y="forward_return_6m",
+                    color="group",
+                    color_discrete_map={"Drift Flag (short)": "#d62728", "Stable (long)": "#2ca02c"},
+                    title="Individual 6m Forward Returns by Signal Group",
+                    labels={"forward_return_6m": "6m Forward Return", "label": "Company / Year", "group": "Signal"},
+                )
+                fig_dist.add_hline(y=0, line_dash="solid", line_color="grey")
+                fig_dist.update_layout(height=420, xaxis_tickangle=-45)
+                st.plotly_chart(fig_dist, use_container_width=True)
+
+                # ---- Threshold sensitivity table ---------------------------
+                st.subheader("Threshold Sensitivity Analysis")
+                st.caption(
+                    "Return spread and hit rate across candidate z-score thresholds. "
+                    "In-sample only — with 6 flags total, do not interpret as evidence for changing the threshold."
+                )
+
+                sensitivity = tune_threshold(valid, forward_returns_df)
+
+                fmt_map = {
+                    "threshold":            "{:.1f}",
+                    "n_flags":              "{:d}",
+                    "mean_flagged_return":  "{:+.1%}",
+                    "mean_unflagged_return":"{:+.1%}",
+                    "return_spread":        "{:+.1%}",
+                    "hit_rate":             "{:.1%}",
+                    "sharpe_approx":        "{:.2f}",
+                }
+                display_sensitivity = sensitivity.copy()
+                for col, fmt in fmt_map.items():
+                    if col in display_sensitivity.columns:
+                        display_sensitivity[col] = display_sensitivity[col].apply(
+                            lambda x, f=fmt: f.format(x) if pd.notna(x) and not (isinstance(x, float) and np.isnan(x)) else "N/A"
+                        )
+                display_sensitivity = display_sensitivity.rename(columns={
+                    "threshold":             "Z Threshold",
+                    "n_flags":               "Flags",
+                    "mean_flagged_return":   "Mean Flagged Return",
+                    "mean_unflagged_return": "Mean Stable Return",
+                    "return_spread":         "Return Spread",
+                    "hit_rate":              "Hit Rate",
+                    "sharpe_approx":         "Sharpe (approx)",
+                })
+                st.dataframe(display_sensitivity, use_container_width=True, hide_index=True)
 
 
 if __name__ == "__main__":
