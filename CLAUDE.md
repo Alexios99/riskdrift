@@ -99,22 +99,31 @@ pytest tests/test_pipeline.py -v
 
 ---
 
-## Real Results — The 6 Drift Flags
+## Real Results — 15 Drift Flags Across 23 Tickers
 
-The pipeline was validated on 9 S&P 500 companies across 71 real filings (2015–2023).
+The pipeline is validated on **23 S&P 500 companies across 9 GICS sectors, 188 real filings (2013–2023)**.
 
 | Ticker | Year | Z-Score | Cosine Sim | 6m Fwd Return | Story |
 |--------|------|---------|------------|---------------|-------|
+| D | 2021 | **−158.3** | 0.7961 | −2.0% | Dominion sold gas transmission to Berkshire — first filing as pure regulated utility |
+| TSLA | 2018 | **−58.7** | 0.5572 | +4.9% | Model 3 production crisis + SEC enforcement; risk section completely rewritten |
+| T | 2019 | **−30.9** | 0.7525 | +23.4% | First full year post-Time Warner acquisition; WarnerMedia risk factors added |
+| UAL | 2018 | **−11.6** | 0.9965 | +33.4% | Major pilot contract; oil price spike; capacity/yield risk language added |
 | NFLX | 2018 | **−11.3** | 0.9977 | −18.7% | Disney+ / HBO Max announced — competitive risk language spike |
+| CVX | 2021 | **−8.2** | 0.9543 | −1.6% | Noble Energy acquisition — first filing integrating new basin/E&P risks |
+| UAL | 2021 | **−7.8** | 0.9830 | −17.7% | CARES Act wind-down; return-to-operations risk replacing COVID emergency language |
+| UAL | 2020 | **−6.1** | 0.9935 | +35.5% | COVID-19 — first filing with liquidity/capacity/safety emergency disclosures |
 | AAPL | 2019 | **−5.7** | 0.9896 | +17.1% | US-China trade war; tariff and supply-chain risk language added |
+| CVX | 2020 | **−4.8** | 0.9829 | +8.1% | COVID oil demand collapse; price-war and write-down risk language |
 | BA | 2022 | **−4.7** | 0.9895 | +10.8% | 737 MAX programme costs + defence contract losses |
 | META | 2019 | **−4.6** | 0.9987 | +52.3% | Post-Cambridge Analytica; GDPR + congressional scrutiny language |
 | BA | 2019 | **−4.1** | 0.9948 | −36.7% | 737 MAX grounding — first appearance of MCAS/certification language |
 | NFLX | 2020 | **−3.0** | 0.9970 | +1.5% | COVID-19 operational risks + password-sharing language |
+| D | 2019 | **−2.8** | 0.9949 | +8.2% | SCANA merger integration; regulatory and rate recovery risk language |
 
-Mean forward return: **+4.4% (flagged)** vs **+8.9% (unflagged)** — directionally consistent with the thesis.
+Mean forward return: **+7.9% (flagged)** vs **+6.6% (unflagged)** (+1.3pp spread). Signal is regime-shift identifier, not directional predictor — strong negative returns (BA 2019: −36.7%, NFLX 2018: −18.7%) alongside strong positive returns (UAL 2020: +35.5%, META 2019: +52.3%).
 
-Boeing 2019 is the headline case study: z = −4.1, cosine sim dropped to 0.9948 from a baseline mean of 0.9980, flagging the 737 MAX grounding at 4.1 standard deviations.
+Boeing 2019 and Dominion 2021 are the headline case studies. TSLA 2018 (z = −58.7, cosine 0.557) is the most extreme signal.
 
 ---
 
@@ -140,19 +149,35 @@ The rolling z-score uses an expanding window: `z(t) = (sim(t) − mean(sim(1..t-
 
 ---
 
-## Universe — 9 Tickers, 6 GICS Sectors
+## Universe — 23 Tickers, 9 GICS Sectors (Complete)
 
-| Ticker | Company | Sector |
-|--------|---------|--------|
-| BA | Boeing | Industrials |
-| AAPL | Apple | Information Technology |
-| MSFT | Microsoft | Information Technology |
-| META | Meta Platforms | Communication Services |
-| NFLX | Netflix | Communication Services |
-| XOM | ExxonMobil | Energy |
-| JPM | JPMorgan Chase | Financials |
-| JNJ | Johnson & Johnson | Health Care |
-| KO | Coca-Cola | Consumer Staples |
+| Ticker | Company | Sector | Drift Flags |
+|--------|---------|--------|-------------|
+| AAPL | Apple | Information Technology | 2019 |
+| AMZN | Amazon | Consumer Discretionary | — |
+| BA | Boeing | Industrials | 2019, 2022 |
+| CVX | Chevron | Energy | 2020, 2021 |
+| D | Dominion Energy | Utilities | 2019, 2021 |
+| DIS | Walt Disney | Communication Services | — |
+| GE | GE Aerospace | Industrials | — |
+| GOOGL | Alphabet | Communication Services | — |
+| JNJ | Johnson & Johnson | Health Care | — |
+| JPM | JPMorgan Chase | Financials | — |
+| KO | Coca-Cola | Consumer Staples | — |
+| META | Meta Platforms | Communication Services | 2019 |
+| MSFT | Microsoft | Information Technology | — |
+| NEE | NextEra Energy | Utilities | — |
+| NFLX | Netflix | Communication Services | 2018, 2020 |
+| PFE | Pfizer | Health Care | — |
+| PG | Procter & Gamble | Consumer Staples | — |
+| T | AT&T | Communication Services | 2019 |
+| TSLA | Tesla | Consumer Discretionary | 2018 |
+| UAL | United Airlines | Industrials | 2018, 2020, 2021 |
+| VZ | Verizon | Communication Services | — |
+| WMT | Walmart | Consumer Staples | — |
+| XOM | ExxonMobil | Energy | — |
+
+**Note:** Delta Air Lines (DAL) was excluded — SEC filings contained cross-reference stubs rather than inline Item 1A text, causing extraction failures.
 
 ---
 
