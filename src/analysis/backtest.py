@@ -49,6 +49,24 @@ RISK_FREE_RATE = 0.05  # approximate annual risk-free rate
 LONG_Z_THRESHOLD = -0.5
 SHORT_Z_THRESHOLD = -2.0
 
+# Extended backtest constants
+SECTOR_ETF_MAP: dict[str, str] = {
+    "Information Technology": "XLK",
+    "Communication Services": "XLC",
+    "Consumer Discretionary": "XLY",
+    "Consumer Staples": "XLP",
+    "Energy": "XLE",
+    "Financials": "XLF",
+    "Health Care": "XLV",
+    "Industrials": "XLI",
+    "Materials": "XLB",
+    "Real Estate": "XLRE",
+    "Utilities": "XLU",
+}
+MULTI_HORIZON_MONTHS: list[int] = [1, 3, 6, 12]
+VOL_LOOKBACK_DAYS: int = 63       # ~3 months of trading days
+TIME_TO_THRESHOLD_PCT: float = 0.10
+
 
 def fetch_forward_returns(
     tickers: list[str],
@@ -324,6 +342,292 @@ def print_backtest_report(metrics: dict) -> None:
         else:
             print(f"  {key:<35} {value:>10}")
     print("=" * 50 + "\n")
+
+
+# ---------------------------------------------------------------------------
+# Extended backtest — multi-horizon, SPY/sector benchmarks, tool metrics
+# ---------------------------------------------------------------------------
+
+def _extract_close(raw: pd.DataFrame, symbol: str, all_symbols: set[str]) -> pd.Series:
+    """Pull a single ticker's adjusted-close series from a yfinance bulk download."""
+    if len(all_symbols) == 1:
+        return raw["Close"]
+    try:
+        return raw["Close"][symbol]
+    except (KeyError, TypeError):
+        pass
+    try:
+        return raw[symbol]["Close"]
+    except (KeyError, TypeError):
+        return pd.Series(dtype=float)
+
+
+def fetch_price_series(
+    tickers: list[str],
+    filing_dates: dict[str, dict[int, str]],
+    sector_map: dict[str, str] | None = None,
+    max_holding_months: int = 12,
+    vol_lookback_days: int = VOL_LOOKBACK_DAYS,
+) -> dict[tuple[str, int], pd.DataFrame]:
+    """Fetch daily adjusted-close prices for each (ticker, year), SPY, and sector ETF.
+
+    Parameters
+    ----------
+    sector_map:
+        {ticker: sector_etf_symbol} e.g. {"AAPL": "XLK"}. If None, sector
+        comparison is omitted.
+
+    Returns
+    -------
+    dict mapping (ticker, year) → DataFrame with DatetimeIndex and columns
+    "ticker", "spy", and optionally the sector ETF symbol. Coverage spans
+    vol_lookback_days before the filing date through max_holding_months after.
+    """
+    if not YFINANCE_AVAILABLE:
+        logger.error("yfinance required for price series fetching.")
+        return {}
+
+    all_symbols: set[str] = set(tickers) | {"SPY"}
+    if sector_map:
+        all_symbols |= set(sector_map.values())
+
+    all_dates = [
+        pd.Timestamp(date_str)
+        for ticker in tickers
+        for date_str in filing_dates.get(ticker, {}).values()
+    ]
+    if not all_dates:
+        return {}
+
+    global_start = min(all_dates) - pd.DateOffset(days=vol_lookback_days + 15)
+    global_end = max(all_dates) + pd.DateOffset(months=max_holding_months + 1)
+
+    logger.info(
+        "Bulk download: %d symbols %s → %s",
+        len(all_symbols), global_start.date(), global_end.date(),
+    )
+    try:
+        raw = yf.download(
+            sorted(all_symbols),
+            start=global_start.strftime("%Y-%m-%d"),
+            end=global_end.strftime("%Y-%m-%d"),
+            auto_adjust=True,
+            progress=False,
+        )
+    except Exception as exc:
+        logger.error("Bulk price download failed: %s", exc)
+        return {}
+
+    result: dict[tuple[str, int], pd.DataFrame] = {}
+
+    for ticker in tickers:
+        if ticker not in filing_dates:
+            continue
+
+        ticker_close = _extract_close(raw, ticker, all_symbols)
+        spy_close = _extract_close(raw, "SPY", all_symbols)
+        sector_etf = sector_map.get(ticker) if sector_map else None
+        sector_close = _extract_close(raw, sector_etf, all_symbols) if sector_etf else None
+
+        for year, date_str in filing_dates[ticker].items():
+            filing_dt = pd.Timestamp(date_str)
+            window_start = filing_dt - pd.DateOffset(days=vol_lookback_days + 15)
+            window_end = filing_dt + pd.DateOffset(months=max_holding_months + 1)
+
+            def _slice(series: pd.Series) -> pd.Series:
+                return series[(series.index >= window_start) & (series.index <= window_end)]
+
+            df = pd.concat(
+                [_slice(ticker_close).rename("ticker"), _slice(spy_close).rename("spy")],
+                axis=1,
+            ).dropna(how="all")
+
+            if sector_close is not None and sector_etf is not None:
+                df = pd.concat([df, _slice(sector_close).rename(sector_etf)], axis=1)
+
+            if len(df) < 5:
+                continue
+            result[(ticker, int(year))] = df
+
+    return result
+
+
+def _holding_return(prices: pd.Series, start: pd.Timestamp, months: int) -> float | None:
+    end = start + pd.DateOffset(months=months)
+    w = prices[(prices.index >= start) & (prices.index <= end)].dropna()
+    if len(w) < 2:
+        return None
+    return float((w.iloc[-1] - w.iloc[0]) / w.iloc[0])
+
+
+def _intraperiod_drawdown(prices: pd.Series, start: pd.Timestamp, months: int) -> float | None:
+    """Worst trough relative to entry price during the holding window."""
+    end = start + pd.DateOffset(months=months)
+    w = prices[(prices.index >= start) & (prices.index <= end)].dropna()
+    if len(w) < 2:
+        return None
+    entry = w.iloc[0]
+    return float(((w - entry) / entry).min())
+
+
+def _realised_vol(prices: pd.Series, start: pd.Timestamp, lookback_days: int, forward: bool) -> float | None:
+    """Annualised realised vol over lookback_days before or after start."""
+    if forward:
+        w = prices[prices.index >= start].dropna().iloc[:lookback_days]
+    else:
+        w = prices[prices.index < start].dropna().iloc[-lookback_days:]
+    if len(w) < 5:
+        return None
+    log_rets = np.log(w / w.shift(1)).dropna()
+    return float(log_rets.std() * np.sqrt(252)) if len(log_rets) > 1 else None
+
+
+def _days_to_threshold(prices: pd.Series, start: pd.Timestamp, threshold_pct: float) -> int | None:
+    """Trading days until price crosses ±threshold_pct from entry. None if never crossed."""
+    post = prices[prices.index >= start].dropna()
+    if len(post) < 2:
+        return None
+    entry = post.iloc[0]
+    for i, price in enumerate(post.iloc[1:], start=1):
+        if abs((price - entry) / entry) >= threshold_pct:
+            return i
+    return None
+
+
+def compute_position_metrics(
+    price_df: pd.DataFrame,
+    filing_date: pd.Timestamp,
+    holding_months_list: list[int] = MULTI_HORIZON_MONTHS,
+    vol_lookback_days: int = VOL_LOOKBACK_DAYS,
+    threshold_pct: float = TIME_TO_THRESHOLD_PCT,
+) -> dict:
+    """Compute all extended metrics for one (ticker, year) position.
+
+    Returns a flat dict with keys for each holding period and tool metrics.
+    """
+    ticker_prices = price_df["ticker"].dropna()
+    spy_prices = price_df["spy"].dropna()
+    sector_col = [c for c in price_df.columns if c not in ("ticker", "spy")]
+    sector_prices = price_df[sector_col[0]].dropna() if sector_col else None
+
+    out: dict = {}
+    for months in holding_months_list:
+        t = _holding_return(ticker_prices, filing_date, months)
+        s = _holding_return(spy_prices, filing_date, months)
+        sec = _holding_return(sector_prices, filing_date, months) if sector_prices is not None else None
+        out[f"return_{months}m"] = t
+        out[f"spy_return_{months}m"] = s
+        out[f"sector_return_{months}m"] = sec
+        out[f"excess_vs_spy_{months}m"] = (t - s) if (t is not None and s is not None) else None
+        out[f"excess_vs_sector_{months}m"] = (t - sec) if (t is not None and sec is not None) else None
+        out[f"intraperiod_drawdown_{months}m"] = _intraperiod_drawdown(ticker_prices, filing_date, months)
+
+    vol_pre = _realised_vol(ticker_prices, filing_date, vol_lookback_days, forward=False)
+    vol_post = _realised_vol(ticker_prices, filing_date, vol_lookback_days, forward=True)
+    out["vol_pre_flag"] = vol_pre
+    out["vol_post_flag"] = vol_post
+    out["vol_uplift"] = (
+        (vol_post / vol_pre - 1) if (vol_pre and vol_post and vol_pre > 0) else None
+    )
+    out["days_to_10pct_move"] = _days_to_threshold(ticker_prices, filing_date, threshold_pct)
+    return out
+
+
+def run_extended_backtest(
+    drift_scores: pd.DataFrame,
+    price_series: dict[tuple[str, int], pd.DataFrame],
+    long_z_threshold: float = LONG_Z_THRESHOLD,
+    short_z_threshold: float = SHORT_Z_THRESHOLD,
+    holding_months_list: list[int] = MULTI_HORIZON_MONTHS,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Run extended backtest: multi-horizon returns, SPY/sector benchmarks, tool metrics.
+
+    Parameters
+    ----------
+    drift_scores:
+        Must contain ticker, year, z_score columns.
+    price_series:
+        Output of fetch_price_series().
+
+    Returns
+    -------
+    position_df : pd.DataFrame
+        One row per (ticker, year) with all computed per-position metrics.
+    horizon_summary : pd.DataFrame
+        One row per holding period with aggregate L/S metrics and SPY comparison.
+    """
+    rows = []
+    for _, row in drift_scores.iterrows():
+        ticker = str(row["ticker"])
+        year = int(row["year"])
+        key = (ticker, year)
+        if key not in price_series:
+            continue
+
+        # FY{year} 10-K is published in early {year+1}; April 1 of year+1
+        # matches the convention used for the pre-computed forward_return_6m CSV.
+        filing_date = pd.Timestamp(f"{year + 1}-04-01")
+        pos = compute_position_metrics(price_series[key], filing_date, holding_months_list)
+        pos.update({
+            "ticker": ticker,
+            "year": year,
+            "z_score": row.get("z_score"),
+            "drift_flag": bool(row.get("drift_flag", False)),
+            "sector": row.get("sector", "Unknown"),
+        })
+        rows.append(pos)
+
+    if not rows:
+        return pd.DataFrame(), pd.DataFrame()
+
+    pos_df = pd.DataFrame(rows)
+    longs = pos_df[pos_df["z_score"] > long_z_threshold]
+    shorts = pos_df[pos_df["z_score"] < short_z_threshold]
+
+    horizon_rows = []
+    for months in holding_months_list:
+        ret_col = f"return_{months}m"
+        spy_col = f"spy_return_{months}m"
+        exc_col = f"excess_vs_spy_{months}m"
+        sec_col = f"excess_vs_sector_{months}m"
+        dd_col = f"intraperiod_drawdown_{months}m"
+
+        if ret_col not in pos_df.columns:
+            continue
+
+        long_ret = longs[ret_col].mean() if not longs.empty else np.nan
+        short_ret = shorts[ret_col].mean() if not shorts.empty else np.nan
+        ls_spread = long_ret - short_ret if pd.notna(long_ret) and pd.notna(short_ret) else np.nan
+
+        spy_ret_long = longs[spy_col].mean() if (not longs.empty and spy_col in longs) else np.nan
+        spy_ret_short = shorts[spy_col].mean() if (not shorts.empty and spy_col in shorts) else np.nan
+        spy_ls_spread = (
+            spy_ret_long - spy_ret_short
+            if pd.notna(spy_ret_long) and pd.notna(spy_ret_short)
+            else np.nan
+        )
+
+        short_exc_spy = shorts[exc_col].mean() if (not shorts.empty and exc_col in shorts) else np.nan
+        short_exc_sector = shorts[sec_col].mean() if (not shorts.empty and sec_col in shorts) else np.nan
+
+        hit_rate = (shorts[ret_col] < 0).mean() if not shorts.empty else np.nan
+        spy_beat_rate = (shorts[exc_col] < 0).mean() if (not shorts.empty and exc_col in shorts) else np.nan
+        dd_short = shorts[dd_col].mean() if (not shorts.empty and dd_col in shorts.columns) else np.nan
+
+        horizon_rows.append({
+            "horizon": f"{months}m",
+            "long_return": long_ret,
+            "short_return": short_ret,
+            "ls_spread": ls_spread,
+            "spy_return_short_leg": spy_ret_short,
+            "short_excess_vs_spy": short_exc_spy,
+            "short_excess_vs_sector": short_exc_sector,
+            "hit_rate": hit_rate,
+            "spy_underperform_rate": spy_beat_rate,
+            "avg_intraperiod_drawdown": dd_short,
+        })
+
+    return pos_df, pd.DataFrame(horizon_rows)
 
 
 if __name__ == "__main__":

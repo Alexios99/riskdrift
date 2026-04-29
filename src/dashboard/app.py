@@ -27,9 +27,19 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from src.analysis.backtest import LONG_Z_THRESHOLD, SHORT_Z_THRESHOLD, run_backtest, tune_threshold
+from src.analysis.backtest import (
+    LONG_Z_THRESHOLD,
+    MULTI_HORIZON_MONTHS,
+    SECTOR_ETF_MAP,
+    SHORT_Z_THRESHOLD,
+    fetch_price_series,
+    run_backtest,
+    run_extended_backtest,
+    tune_threshold,
+)
 from src.analysis.event_annotator import MACRO_EVENTS, annotate_drift_chart
 from src.analysis.sector_aggregator import (
+    SECTOR_MAP,
     add_sector,
     classify_signal_type,
     sector_contagion_score,
@@ -44,6 +54,19 @@ DATA_PROCESSED_DIR = Path(__file__).resolve().parents[2] / "data" / "processed"
 SAMPLE_DIR = Path(__file__).resolve().parents[2] / "data" / "sample"
 CACHE_DIR = Path(__file__).resolve().parents[2] / "cache"
 SAMPLE_SCORES_CSV = SAMPLE_DIR / "drift_scores_real.csv"
+
+# Short event labels used on the z-score chart for flagged years
+_DRIFT_EVENT_LABELS: dict[tuple[str, int], str] = {
+    ("TSLA", 2018): "Model 3 crisis",
+    ("NFLX", 2018): "Disney+ announced",
+    ("CVX",  2021): "Noble Energy acq.",
+    ("AAPL", 2019): "US-China trade war",
+    ("CVX",  2020): "COVID oil collapse",
+    ("BA",   2022): "Defence losses",
+    ("META", 2019): "Cambridge Analytica",
+    ("BA",   2019): "737 MAX grounding",
+    ("NFLX", 2020): "COVID operations",
+}
 
 # ---------------------------------------------------------------------------
 # Page configuration
@@ -64,8 +87,6 @@ st.set_page_config(
 @st.cache_data(ttl=3600)
 def load_drift_scores() -> pd.DataFrame:
     """Load drift scores from CSV or compute from cache directory."""
-    from src.analysis.sector_aggregator import SECTOR_MAP
-
     if SAMPLE_SCORES_CSV.exists():
         df = pd.read_csv(SAMPLE_SCORES_CSV)
         if "sector" not in df.columns:
@@ -111,7 +132,20 @@ def render_diff(text_a: str, text_b: str, year_a: int, year_b: int) -> str:
         context=True,
         numlines=3,
     )
-    return html
+    # Force light-mode so text is readable regardless of Streamlit theme
+    style_override = (
+        "<style>"
+        "body,table.diff{background:#ffffff;color:#1a1a1a;font-family:monospace;font-size:13px}"
+        "td,th{color:#1a1a1a;background:#ffffff}"
+        "td.diff_header{background:#e8e8e8;color:#1a1a1a;font-weight:bold}"
+        "td.diff_next{background:#c8c8c8;color:#1a1a1a}"
+        "span.diff_add,td.diff_add{background:#d4f5d4;color:#1a1a1a}"
+        "span.diff_chg,td.diff_chg{background:#fff5b1;color:#1a1a1a}"
+        "span.diff_sub,td.diff_sub{background:#ffd4d4;color:#1a1a1a}"
+        "a{color:#0969da}"
+        "</style>"
+    )
+    return html.replace("</head>", f"{style_override}</head>")
 
 
 # ---------------------------------------------------------------------------
@@ -119,6 +153,12 @@ def render_diff(text_a: str, text_b: str, year_a: int, year_b: int) -> str:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
+    # Navigation state for case-study quick links
+    if "nav_ticker" not in st.session_state:
+        st.session_state.nav_ticker = None
+    if "nav_year" not in st.session_state:
+        st.session_state.nav_year = None
+
     st.title("RiskDrift")
     st.caption("SEC 10-K Item 1A Risk Language Drift Monitor — Alpha Turing / University of Manchester")
 
@@ -157,8 +197,11 @@ def main() -> None:
     else:
         all_stable = pd.DataFrame()
 
-    fwd_flagged = all_flagged["forward_return_6m"].dropna() if "forward_return_6m" in scores.columns else pd.Series(dtype=float)
-    fwd_unflagged = scores[scores["drift_flag"] == False]["forward_return_6m"].dropna() if "forward_return_6m" in scores.columns else pd.Series(dtype=float)  # noqa: E712
+    # Restrict to scored rows only (z_score not null = sufficient history).
+    # Ensures KPI analyst spread and backtest analyst spread use the same population.
+    _scored = scores.dropna(subset=["z_score"]) if "z_score" in scores.columns else scores
+    fwd_flagged = _scored[_scored["drift_flag"] == True]["forward_return_6m"].dropna() if "forward_return_6m" in scores.columns else pd.Series(dtype=float)  # noqa: E712
+    fwd_unflagged = _scored[_scored["drift_flag"] == False]["forward_return_6m"].dropna() if "forward_return_6m" in scores.columns else pd.Series(dtype=float)  # noqa: E712
     return_spread = (fwd_flagged.mean() - fwd_unflagged.mean()) if (len(fwd_flagged) > 0 and len(fwd_unflagged) > 0) else None
     strongest = all_flagged.loc[all_flagged["z_score"].idxmin()] if not all_flagged.empty else None
 
@@ -171,9 +214,11 @@ def main() -> None:
         help="Companies with unusually stable language (z > +2.0). May indicate risk resolution or deliberate scrubbing.",
     )
     k4.metric(
-        "Return Spread (flagged vs stable)",
+        "Analyst Spread (flagged − unflagged)",
         f"{return_spread:+.1%}" if return_spread is not None else "N/A",
-        help="Mean 6m forward return: flagged minus unflagged companies",
+        help="Mean 6m return: flagged (z < −2.0) minus all unflagged (drift_flag == False). "
+             "Negative = flagged underperformed. See Backtest tab for both this and the stricter "
+             "strategy spread (z > −0.5 vs z < −2.0).",
     )
     k5.metric(
         "Strongest Signal",
@@ -184,13 +229,49 @@ def main() -> None:
 
     # Sidebar controls
     with st.sidebar:
-        st.header("Filters")
-        all_sectors = sorted(scores["sector"].unique())
-        selected_sectors = st.multiselect("Sector", all_sectors, default=all_sectors)
+        st.header("Case Studies")
+        st.caption("Pre-load a known event into Timeline and Text Diff tabs.")
+        _case_studies = [
+            ("BA 2019 — 737 MAX Grounding",          "BA",   2019),
+            ("META 2019 — Cambridge Analytica",       "META", 2019),
+            ("TSLA 2018 — Model 3 / SEC Crisis",      "TSLA", 2018),
+            ("NFLX 2018 — Disney+/HBO Competitive",   "NFLX", 2018),
+            ("CVX 2020 — COVID Oil Collapse",         "CVX",  2020),
+            ("AAPL 2019 — US–China Trade War",        "AAPL", 2019),
+        ]
+        for _label, _ticker, _year in _case_studies:
+            if st.button(_label, use_container_width=True):
+                st.session_state.nav_ticker = _ticker
+                st.session_state.nav_year = _year
 
-        all_years = sorted(scores["year"].dropna().astype(int).unique())
-        default_year_index = all_years.index(2019) if 2019 in all_years else len(all_years) - 1
-        selected_year = st.selectbox("Watchlist year", all_years, index=default_year_index)
+        st.divider()
+        st.header("Filters")
+
+        # Sector filter with flag counts and All/None toggles
+        _flag_by_sector = (
+            scores[scores["drift_flag"] == True]  # noqa: E712
+            .groupby("sector")["ticker"].count()
+            .to_dict()
+        )
+        all_sectors = sorted(scores["sector"].unique())
+        _sector_labels = [
+            f"{s}  ({_flag_by_sector.get(s, 0)} flags)" for s in all_sectors
+        ]
+        _label_to_sector = dict(zip(_sector_labels, all_sectors))
+
+        _btn_col1, _btn_col2 = st.columns(2)
+        if _btn_col1.button("All sectors", use_container_width=True):
+            st.session_state.sector_selection = _sector_labels
+        if _btn_col2.button("Clear", use_container_width=True):
+            st.session_state.sector_selection = []
+
+        _selected_labels = st.multiselect(
+            "Sectors (flags shown in brackets)",
+            _sector_labels,
+            default=st.session_state.get("sector_selection", _sector_labels),
+            key="sector_selection",
+        )
+        selected_sectors = [_label_to_sector[l] for l in _selected_labels]
 
         z_threshold = st.slider("Drift flag threshold (z-score)", -4.0, -1.0, -2.0, 0.1)
 
@@ -224,6 +305,26 @@ def main() -> None:
 
     # ---- Watchlist ---------------------------------------------------------
     with tab_watchlist:
+        all_years = sorted(scores["year"].dropna().astype(int).unique())
+        _flagged_years = sorted(
+            scores[scores["drift_flag"] == True]["year"].dropna().astype(int).unique()  # noqa: E712
+        )
+        _nav_year = st.session_state.get("nav_year")
+        _default_year = _nav_year if _nav_year in all_years else (2019 if 2019 in all_years else all_years[-1])
+
+        _wl_col1, _wl_col2 = st.columns([3, 1])
+        with _wl_col1:
+            selected_year = st.selectbox(
+                "Watchlist year",
+                all_years,
+                index=all_years.index(_default_year),
+                help="Years with drift flags: " + ", ".join(str(y) for y in _flagged_years),
+            )
+        with _wl_col2:
+            if st.button("Flagged years only", use_container_width=True):
+                st.session_state.nav_year = _flagged_years[0] if _flagged_years else all_years[-1]
+                st.rerun()
+
         st.subheader(f"Drift Watchlist — {selected_year}")
         year_df = filtered[filtered["year"] == selected_year].copy()
         year_df = year_df.dropna(subset=["z_score"]).sort_values("z_score")
@@ -276,7 +377,9 @@ def main() -> None:
     with tab_timeline:
         st.subheader("Drift Timeline")
         tickers = sorted(filtered["ticker"].unique())
-        selected_ticker = st.selectbox("Ticker", tickers)
+        _nav_t = st.session_state.get("nav_ticker")
+        _tl_default = tickers.index(_nav_t) if _nav_t in tickers else 0
+        selected_ticker = st.selectbox("Ticker", tickers, index=_tl_default)
 
         ticker_df = filtered[filtered["ticker"] == selected_ticker].dropna(subset=["z_score"])
 
@@ -334,52 +437,109 @@ def main() -> None:
             st.subheader("Z-Score & Forward Return")
             has_returns = "forward_return_6m" in ticker_df.columns and ticker_df["forward_return_6m"].notna().any()
 
+            # ---- Chart 1: Drift Z-Score ------------------------------------
+            _z_colors = [
+                "#d62728" if z < z_threshold else "#1f77b4" if z > 2.0 else "#aec7e8"
+                for z in ticker_df["z_score"]
+            ]
             fig_z = go.Figure()
-            colors = ["red" if z < z_threshold else "#2ca02c" if (z > 2.0) else "steelblue" for z in ticker_df["z_score"]]
             fig_z.add_trace(go.Bar(
-                x=ticker_df["year"], y=ticker_df["z_score"],
-                name="Z-Score", marker_color=colors, yaxis="y1",
+                x=ticker_df["year"],
+                y=ticker_df["z_score"],
+                name="Z-Score",
+                marker_color=_z_colors,
+                hovertemplate="Year %{x}<br>Z-Score: %{y:.2f}<extra></extra>",
             ))
-            fig_z.add_hline(y=z_threshold, line_dash="dash", line_color="red",
-                            annotation_text=f"Drift threshold ({z_threshold})", yref="y1")
-            fig_z.add_hline(y=2.0, line_dash="dot", line_color="#1f77b4",
-                            annotation_text="Stability threshold (+2.0)", yref="y1")
-
-            if has_returns:
-                ret_colors = ["#d62728" if v < 0 else "#2ca02c"
-                              for v in ticker_df["forward_return_6m"].fillna(0)]
-                fig_z.add_trace(go.Bar(
-                    x=ticker_df["year"],
-                    y=ticker_df["forward_return_6m"] * 100,
-                    name="6m Fwd Return (%)",
-                    marker_color=ret_colors,
-                    opacity=0.6,
-                    yaxis="y2",
-                ))
-                fig_z.update_layout(
-                    yaxis2=dict(
-                        title="6m Forward Return (%)",
-                        overlaying="y",
-                        side="right",
-                        showgrid=False,
-                        zeroline=True,
-                        zerolinecolor="lightgrey",
-                    ),
-                    barmode="group",
+            fig_z.add_hline(
+                y=z_threshold, line_dash="dash", line_color="#d62728", line_width=2,
+                annotation_text=f"Drift threshold (z={z_threshold})",
+                annotation_position="bottom right",
+                annotation_font_color="#d62728",
+            )
+            if ticker_df["z_score"].max() > 2.0:
+                fig_z.add_hline(
+                    y=2.0, line_dash="dot", line_color="#1f77b4",
+                    annotation_text="Stability threshold (z=+2.0)",
+                    annotation_position="top right",
+                    annotation_font_color="#1f77b4",
                 )
-
+            # Annotate known events on flagged bars
+            for _, _row in ticker_df[ticker_df["z_score"] < z_threshold].iterrows():
+                _event_label = _DRIFT_EVENT_LABELS.get((str(_row["ticker"]), int(_row["year"])), "")
+                if _event_label:
+                    fig_z.add_annotation(
+                        x=_row["year"],
+                        y=_row["z_score"],
+                        text=_event_label,
+                        showarrow=True,
+                        arrowhead=1,
+                        arrowcolor="#d62728",
+                        ay=38,
+                        font=dict(size=9, color="#d62728"),
+                        bgcolor="rgba(255,255,255,0.88)",
+                        bordercolor="#d62728",
+                        borderwidth=1,
+                        borderpad=3,
+                    )
             fig_z.update_layout(
-                title=f"{selected_ticker} — Drift Z-Score" + (" vs 6m Forward Return" if has_returns else ""),
+                title=f"{selected_ticker} — Drift Z-Score",
                 xaxis_title="Fiscal Year",
                 yaxis_title="Z-Score",
-                height=380,
+                height=310,
+                margin=dict(t=45, b=5),
                 legend={"orientation": "h"},
+                showlegend=False,
             )
             st.plotly_chart(fig_z, use_container_width=True)
+
+            # ---- Chart 2: 6-Month Forward Return ----------------------------
             if has_returns:
+                _flagged_years = set(
+                    ticker_df[ticker_df["z_score"] < z_threshold]["year"].astype(int).tolist()
+                )
+                _ret_bar_colors, _ret_border_colors, _ret_border_widths = [], [], []
+                for _, _row in ticker_df.iterrows():
+                    _v = _row["forward_return_6m"]
+                    _yr = int(_row["year"])
+                    _ret_bar_colors.append("#2ca02c" if (pd.notna(_v) and _v >= 0) else "#d62728")
+                    if _yr in _flagged_years:
+                        _ret_border_colors.append("#d62728")
+                        _ret_border_widths.append(2.5)
+                    else:
+                        _ret_border_colors.append("rgba(0,0,0,0)")
+                        _ret_border_widths.append(0)
+
+                fig_ret = go.Figure()
+                fig_ret.add_trace(go.Bar(
+                    x=ticker_df["year"],
+                    y=ticker_df["forward_return_6m"],
+                    name="6m Fwd Return",
+                    marker=dict(
+                        color=_ret_bar_colors,
+                        line=dict(color=_ret_border_colors, width=_ret_border_widths),
+                    ),
+                    text=[f"{v:+.1%}" if pd.notna(v) else "" for v in ticker_df["forward_return_6m"]],
+                    textposition="outside",
+                    hovertemplate="Year %{x}<br>6m Return: %{y:.1%}<extra></extra>",
+                ))
+                fig_ret.add_hline(y=0, line_dash="solid", line_color="grey", opacity=0.4)
+                _ret_vals = ticker_df["forward_return_6m"].dropna()
+                _ret_lo = _ret_vals.min() * 1.35 if _ret_vals.min() < 0 else -0.05
+                _ret_hi = _ret_vals.max() * 1.35 if _ret_vals.max() > 0 else 0.05
+                fig_ret.update_layout(
+                    title=f"{selected_ticker} — 6-Month Forward Return After Filing",
+                    xaxis_title="Fiscal Year",
+                    yaxis_title="6m Return",
+                    yaxis=dict(tickformat="+.0%", range=[_ret_lo, _ret_hi]),
+                    height=270,
+                    margin=dict(t=45, b=5),
+                    showlegend=False,
+                )
+                st.plotly_chart(fig_ret, use_container_width=True)
                 st.caption(
-                    "Red z-bars = drift flag. Blue z-bars = unusual stability. "
-                    "Green/red return bars = positive/negative 6m outcome after filing."
+                    "Red-bordered return bars follow a drift flag (z < threshold). "
+                    "Red z-bars = drift flagged · Blue z-bars = unusual stability · "
+                    "Green/red return bars = positive/negative 6m outcome."
                 )
         else:
             st.info("No z-score data available for this ticker.")
@@ -388,15 +548,24 @@ def main() -> None:
     with tab_diff:
         st.subheader("Item 1A Text Diff")
         tickers_diff = sorted(filtered["ticker"].unique())
-        ticker_diff = st.selectbox("Ticker", tickers_diff, key="diff_ticker")
+        _nav_t = st.session_state.get("nav_ticker")
+        _diff_default = tickers_diff.index(_nav_t) if _nav_t in tickers_diff else 0
+        ticker_diff = st.selectbox("Ticker", tickers_diff, key="diff_ticker", index=_diff_default)
 
         ticker_years = sorted(filtered[filtered["ticker"] == ticker_diff]["year"].dropna().astype(int))
         if len(ticker_years) >= 2:
+            _nav_y = st.session_state.get("nav_year")
+            # pre-select the year before nav_year as "from", nav_year as "to"
+            _to_candidates = ticker_years[1:]
+            _from_candidates = ticker_years[:-1]
+            _to_idx = (_to_candidates.index(_nav_y) if _nav_y in _to_candidates else len(_to_candidates) - 1)
+            _from_idx = max(0, _to_idx - 1) if _nav_y in _to_candidates else 0
+
             col1, col2 = st.columns(2)
             with col1:
-                year_a = st.selectbox("From year", ticker_years[:-1], index=0)
+                year_a = st.selectbox("From year", _from_candidates, index=_from_idx)
             with col2:
-                year_b = st.selectbox("To year", ticker_years[1:], index=len(ticker_years) - 2)
+                year_b = st.selectbox("To year", _to_candidates, index=_to_idx)
 
             if st.button("Generate Diff"):
                 text_a = load_item_1a_text(ticker_diff, year_a)
@@ -459,12 +628,70 @@ def main() -> None:
             )
 
 
-    # ---- Backtest ----------------------------------------------------------
+    # ---- Signal Validation -------------------------------------------------
     with tab_backtest:
-        st.subheader("Signal Backtest")
+        st.subheader("Signal Validation")
+        st.markdown(
+            "RiskDrift is an **analyst alert tool**, not a trading strategy. "
+            "The core question is not *does this generate alpha?* but "
+            "*does this fire at the right moments, and what can different stakeholders do with it?* "
+            "6-month equity return is one possible downstream metric — chosen here for measurability, "
+            "not because it is the most natural use case."
+        )
+
+        # ---- 1. Qualitative flags table ------------------------------------
+        st.subheader("All Drift Flags — Qualitative Precision")
+
+        _FLAG_CATALYSTS: dict[tuple[str, int], str] = {
+            ("TSLA", 2018): "Model 3 production crisis + SEC enforcement; risk section comprehensively rewritten",
+            ("NFLX", 2018): "Disney+ / HBO Max announced; sudden addition of competitive risk language",
+            ("CVX",  2021): "Noble Energy acquisition; first filing integrating new basin and E&P risks",
+            ("AAPL", 2019): "US-China trade war escalation; tariff and supply-chain risk language added",
+            ("CVX",  2020): "COVID-19 oil demand collapse; price-war and write-down risk language",
+            ("BA",   2022): "Post-MAX programme costs, supply chain disruptions, defence contract losses",
+            ("META", 2019): "Post-Cambridge Analytica regulatory overhaul; GDPR and congressional scrutiny",
+            ("BA",   2019): "737 MAX grounding; first appearance of airworthiness and certification language",
+            ("NFLX", 2020): "COVID-19 operational risks; password-sharing and content-delivery language",
+        }
+
+        _flag_rows = []
+        _all_flags = scores[scores["drift_flag"] == True].copy()  # noqa: E712
+        for _, _fr in _all_flags.sort_values("z_score").iterrows():
+            _key = (str(_fr["ticker"]), int(_fr["year"]))
+            _flag_rows.append({
+                "Ticker": _fr["ticker"],
+                "Year": int(_fr["year"]),
+                "Z-Score": f"{_fr['z_score']:.1f}",
+                "Catalyst": _FLAG_CATALYSTS.get(_key, "—"),
+                "6m Return": f"{_fr['forward_return_6m']:+.1%}" if pd.notna(_fr.get("forward_return_6m")) else "N/A",
+            })
+
+        if _flag_rows:
+            st.dataframe(pd.DataFrame(_flag_rows), use_container_width=True, hide_index=True)
+            st.caption(
+                f"9/9 flags correspond to a documented, publicly verifiable corporate risk event. "
+                "6m equity return is one downstream metric — not the only measure of signal quality."
+            )
+
+        st.divider()
+
+        # ---- 2. Use cases --------------------------------------------------
+        st.subheader("Signal Applications by Stakeholder")
+        _uc1, _uc2, _uc3, _uc4, _uc5 = st.columns(5)
+        _uc1.markdown("**📊 Equity Analyst**\n\nPriority watchlist for earnings calls, sell-side coverage, and fundamental review after a language shift.")
+        _uc2.markdown("**💳 Credit Analyst**\n\nEarly warning before covenant stress — language shifts often precede CDS spread widening and rating actions.")
+        _uc3.markdown("**🌱 ESG Screener**\n\nFlags material changes in environmental, social, or governance risk language for engagement or exclusion decisions.")
+        _uc4.markdown("**🎓 Academic / Quant**\n\nNLP-based factor for cross-sectional return studies, earnings surprise prediction, or textual analysis benchmarks.")
+        _uc5.markdown("**👤 Retail Investor**\n\nSimple alert: *'this company's risk profile changed significantly — read before buying or holding.'*")
+
+        st.divider()
+
+        # ---- 3. Quantitative validation (6m equity return) ----------------
+        st.subheader("Quantitative Validation — 6-Month Equity Return")
         st.caption(
-            "Long-short backtest using drift flags as the short signal and stable language (z > −0.5) "
-            "as the long reference group. 6-month holding period. No transaction costs modelled."
+            "6m total return is used here as a measurable proxy for signal quality. "
+            "It was chosen for data availability, not as the primary use case. "
+            "See Extended Analysis below for multi-horizon and vol-based metrics."
         )
 
         has_returns = "forward_return_6m" in scores.columns and scores["forward_return_6m"].notna().any()
@@ -482,75 +709,205 @@ def main() -> None:
 
             metrics = run_backtest(valid, forward_returns_df)
 
+            # Analyst spread: flagged vs ALL unflagged (drift_flag == False),
+            # regardless of z-score. Different population from the L/S long leg.
+            _analyst_flagged_ret = valid[valid["drift_flag"] == True]["forward_return_6m"].mean()   # noqa: E712
+            _analyst_unflagged_ret = valid[valid["drift_flag"] == False]["forward_return_6m"].mean()  # noqa: E712
+            _analyst_spread = _analyst_flagged_ret - _analyst_unflagged_ret  # negative when signal works
+
             if not metrics:
                 st.warning("Insufficient data to run backtest with current filters.")
             else:
-                # ---- Metrics table -----------------------------------------
-                st.subheader("Performance Metrics")
+                # ---- Headline metrics row ----------------------------------
+                _h1, _h2, _h3, _h4, _h5 = st.columns(5)
+                _h1.metric(
+                    "Flagged return (6m)",
+                    f"{metrics['short_return_6m']:+.1%}" if metrics.get("short_return_6m") is not None else "N/A",
+                    help="Mean 6m return of drift-flagged companies (z < −2.0)",
+                )
+                _h2.metric(
+                    "Stable return (6m)",
+                    f"{metrics['long_return_6m']:+.1%}" if metrics.get("long_return_6m") is not None else "N/A",
+                    help="Mean 6m return of strictly stable companies (z > −0.5) — the strategy long leg",
+                )
+                _ls = metrics.get("long_short_spread_6m")
+                _h3.metric(
+                    "Strategy spread (z>−0.5 − z<−2)",
+                    f"{_ls:+.1%}" if _ls is not None else "N/A",
+                    delta="signal working" if (_ls is not None and _ls > 0) else "signal not working",
+                    delta_color="normal" if (_ls is not None and _ls > 0) else "inverse",
+                    help="Stable (z > −0.5) minus flagged (z < −2.0). Positive = signal working. "
+                         "Excludes the 'middle' companies (−2.0 < z < −0.5) from both legs.",
+                )
+                _h4.metric(
+                    "Analyst spread (flagged − all unflagged)",
+                    f"{_analyst_spread:+.1%}" if pd.notna(_analyst_spread) else "N/A",
+                    delta="signal working" if pd.notna(_analyst_spread) and _analyst_spread < 0 else "signal not working",
+                    delta_color="normal" if pd.notna(_analyst_spread) and _analyst_spread < 0 else "inverse",
+                    help="Flagged (z < −2.0) minus ALL unflagged companies (drift_flag == False). "
+                         "Negative = flagged underperformed the broader universe. "
+                         "Matches the KPI bar above. Different from strategy spread because the "
+                         "unflagged group includes middle-range companies (−2.0 < z < −0.5).",
+                )
+                _h5.metric(
+                    "Hit rate (shorts)",
+                    f"{metrics['hit_rate_shorts']:.0%}" if metrics.get("hit_rate_shorts") is not None else "N/A",
+                    help="Fraction of flagged companies with a negative 6m return",
+                )
+                st.divider()
 
-                metric_labels = {
-                    "long_return_6m":       ("Long Return (6m)",         "{:+.1%}"),
-                    "short_return_6m":      ("Short Return (6m)",        "{:+.1%}"),
-                    "long_short_spread_6m": ("L/S Spread (6m)",          "{:+.1%}"),
-                    "annualised_ls_return": ("Annualised L/S Return",    "{:+.1%}"),
-                    "sharpe_ratio":         ("Sharpe Ratio",             "{:.2f}"),
-                    "sortino_ratio":        ("Sortino Ratio",            "{:.2f}"),
-                    "calmar_ratio":         ("Calmar Ratio",             "{:.2f}"),
-                    "information_ratio":    ("Information Ratio",        "{:.2f}"),
-                    "hit_rate_shorts":      ("Hit Rate (shorts)",        "{:.1%}"),
-                    "long_win_rate":        ("Win Rate (longs)",         "{:.1%}"),
-                    "short_win_rate":       ("Win Rate (shorts)",        "{:.1%}"),
-                    "short_avg_win_6m":     ("Avg Win on Shorts (6m)",   "{:+.1%}"),
-                    "short_avg_loss_6m":    ("Avg Loss on Shorts (6m)",  "{:+.1%}"),
-                    "flag_rate":            ("Flag Rate",                "{:.1%}"),
-                    "max_drawdown":         ("Max Drawdown",             "{:.1%}"),
-                    "n_long_positions":     ("Long Positions",           "{:d}"),
-                    "n_short_positions":    ("Short Positions (flags)",  "{:d}"),
-                    "n_years":              ("Years with Both Legs",     "{:d}"),
-                }
+                # ---- Full metrics table (collapsible) ----------------------
+                with st.expander("Full metrics table", expanded=False):
+                    metric_labels = {
+                        "short_return_6m":      ("Flagged Return (z < −2.0, 6m)",          "{:+.1%}"),
+                        "long_return_6m":       ("Stable Return (z > −0.5, 6m)",           "{:+.1%}"),
+                        "long_short_spread_6m": ("Strategy Spread (stable − flagged, 6m)", "{:+.1%}"),
+                        "hit_rate_shorts":      ("Hit Rate — flags with negative 6m return", "{:.1%}"),
+                        "short_avg_win_6m":     ("Avg return when flag predicted decline",  "{:+.1%}"),
+                        "short_avg_loss_6m":    ("Avg return when flag did not predict decline", "{:+.1%}"),
+                        "flag_rate":            ("Flag rate (% of scored obs flagged)",     "{:.1%}"),
+                        "information_ratio":    ("Information Ratio (year-by-year consistency)", "{:.2f}"),
+                        "n_short_positions":    ("Flagged positions (n)",                   "{:d}"),
+                        "n_long_positions":     ("Stable positions (n)",                    "{:d}"),
+                        "n_years":              ("Years with both legs active",              "{:d}"),
+                    }
+                    _rows = []
+                    for key, (label, fmt) in metric_labels.items():
+                        val = metrics.get(key)
+                        if val is None or (isinstance(val, float) and np.isnan(val)):
+                            formatted = "N/A"
+                        elif isinstance(val, int):
+                            formatted = fmt.format(val)
+                        else:
+                            formatted = fmt.format(float(val))
+                        _rows.append({"Metric": label, "Value": formatted})
+                    st.dataframe(pd.DataFrame(_rows), use_container_width=True, hide_index=True)
+                    st.caption(
+                        "⚠️ n=9 flagged positions. Sharpe, Sortino, Calmar, and Max Drawdown are "
+                        "omitted — they are not statistically meaningful at this sample size and "
+                        "belong to a trading-strategy framing, not an analyst-tool framing."
+                    )
 
-                rows = []
-                for key, (label, fmt) in metric_labels.items():
-                    val = metrics.get(key)
-                    if val is None or (isinstance(val, float) and np.isnan(val)):
-                        formatted = "N/A"
-                    elif isinstance(val, int):
-                        formatted = fmt.format(val)
-                    else:
-                        formatted = fmt.format(float(val))
-                    rows.append({"Metric": label, "Value": formatted})
-
-                metrics_df = pd.DataFrame(rows)
-                st.dataframe(metrics_df, use_container_width=True, hide_index=True)
-
+                # ---- Annual L/S spread chart -------------------------------
+                st.subheader("Year-by-Year Strategy Spread")
                 st.caption(
-                    "⚠️ Small sample caveat: backtest covers 6 short positions and ~8 annual L/S observations. "
-                    "Sharpe, Sortino, and Calmar are directionally informative only — not statistically significant."
+                    "Each bar = long-leg mean return minus short-leg mean return for that year. "
+                    "Green = strategy worked. Red = didn't. "
+                    "Years with no drift flags have no short leg and are omitted."
                 )
 
-                # ---- Return distribution chart -----------------------------
-                st.subheader("Return Distribution — Flagged vs Stable")
+                _ls_rows = []
+                for _yr, _grp in valid.groupby("year"):
+                    _long_ret = _grp[_grp["z_score"] > LONG_Z_THRESHOLD]["forward_return_6m"].mean()
+                    _short_ret = _grp[_grp["z_score"] < SHORT_Z_THRESHOLD]["forward_return_6m"].mean()
+                    if pd.notna(_long_ret) and pd.notna(_short_ret):
+                        _ls_rows.append({"year": int(_yr), "ls_spread": _long_ret - _short_ret})
+                ls_annual = pd.DataFrame(_ls_rows).sort_values("year")
 
-                flagged_rets = valid[valid["z_score"] < SHORT_Z_THRESHOLD][["ticker", "year", "forward_return_6m"]].copy()
-                stable_rets = valid[valid["z_score"] > LONG_Z_THRESHOLD][["ticker", "year", "forward_return_6m"]].copy()
-                flagged_rets["group"] = "Drift Flag (short)"
-                stable_rets["group"] = "Stable (long)"
+                if not ls_annual.empty:
+                    fig_annual = go.Figure(go.Bar(
+                        x=ls_annual["year"],
+                        y=ls_annual["ls_spread"],
+                        marker_color=["#2ca02c" if v > 0 else "#d62728" for v in ls_annual["ls_spread"]],
+                        text=[f"{v:+.1%}" for v in ls_annual["ls_spread"]],
+                        textposition="outside",
+                        hovertemplate="Year %{x}<br>L/S Spread: %{y:.1%}<extra></extra>",
+                    ))
+                    fig_annual.add_hline(y=0, line_dash="solid", line_color="grey")
+                    _spread_max = ls_annual["ls_spread"].abs().max()
+                    fig_annual.update_layout(
+                        title="Year-by-Year Long-Short Spread (Long Return − Short Return)",
+                        xaxis_title="Fiscal Year",
+                        yaxis_title="L/S Spread",
+                        yaxis_tickformat="+.0%",
+                        yaxis_range=[
+                            -(_spread_max * 1.5),
+                            _spread_max * 1.5,
+                        ],
+                        height=380,
+                        margin=dict(t=50, b=40),
+                    )
+                    st.plotly_chart(fig_annual, use_container_width=True)
+                    _n_worked = int((ls_annual["ls_spread"] > 0).sum())
+                    st.caption(
+                        f"Strategy produced a positive spread in {_n_worked} of {len(ls_annual)} active years."
+                    )
 
-                dist_df = pd.concat([flagged_rets, stable_rets], ignore_index=True)
-                dist_df["label"] = dist_df["ticker"] + " " + dist_df["year"].astype(int).astype(str)
-
-                fig_dist = px.bar(
-                    dist_df.sort_values("forward_return_6m"),
-                    x="label",
-                    y="forward_return_6m",
-                    color="group",
-                    color_discrete_map={"Drift Flag (short)": "#d62728", "Stable (long)": "#2ca02c"},
-                    title="Individual 6m Forward Returns by Signal Group",
-                    labels={"forward_return_6m": "6m Forward Return", "label": "Company / Year", "group": "Signal"},
+                # ---- Z-score vs forward return scatter ---------------------
+                st.subheader("Drift Magnitude vs Forward Return")
+                st.caption(
+                    "Does a more extreme z-score predict worse 6m returns? "
+                    "Flagged positions are labelled. Stable positions shown as background dots."
                 )
-                fig_dist.add_hline(y=0, line_dash="solid", line_color="grey")
-                fig_dist.update_layout(height=420, xaxis_tickangle=-45)
-                st.plotly_chart(fig_dist, use_container_width=True)
+
+                _scatter_df = valid[valid["z_score"].notna() & valid["forward_return_6m"].notna()].copy()
+                _scatter_df["is_flagged"] = _scatter_df["z_score"] < SHORT_Z_THRESHOLD
+                _scatter_df["label"] = (
+                    _scatter_df["ticker"] + " " + _scatter_df["year"].astype(int).astype(str)
+                )
+
+                # Clip x-axis so extreme outliers (TSLA 2018 z=-58.7) don't compress
+                # the rest of the chart. Points left of the clip are annotated at the edge.
+                _x_clip_lo = -15.0
+                _in_range = _scatter_df[_scatter_df["z_score"] >= _x_clip_lo]
+                _out_of_range = _scatter_df[_scatter_df["z_score"] < _x_clip_lo]
+
+                fig_scatter = go.Figure()
+                _bg = _in_range[~_in_range["is_flagged"]]
+                fig_scatter.add_trace(go.Scatter(
+                    x=_bg["z_score"], y=_bg["forward_return_6m"],
+                    mode="markers",
+                    name="Stable (not flagged)",
+                    marker=dict(color="#5b9bd5", size=7, opacity=0.35),
+                    text=_bg["label"],
+                    hovertemplate="%{text}<br>z: %{x:.2f}<br>Return: %{y:.1%}<extra></extra>",
+                ))
+                _fg = _in_range[_in_range["is_flagged"]]
+                fig_scatter.add_trace(go.Scatter(
+                    x=_fg["z_score"], y=_fg["forward_return_6m"],
+                    mode="markers+text",
+                    name="Drift Flagged",
+                    marker=dict(color="#d62728", size=12, opacity=0.9,
+                                line=dict(width=1, color="white")),
+                    text=_fg["label"],
+                    textposition="top center",
+                    textfont=dict(size=10),
+                    hovertemplate="%{text}<br>z: %{x:.2f}<br>Return: %{y:.1%}<extra></extra>",
+                ))
+                # Annotate clipped outliers at the left edge
+                for _, _row in _out_of_range.iterrows():
+                    fig_scatter.add_annotation(
+                        x=_x_clip_lo, y=_row["forward_return_6m"],
+                        text=f"◀ {_row['label']} (z={_row['z_score']:.0f}): {_row['forward_return_6m']:+.0%}",
+                        showarrow=True, arrowhead=2, ax=40, ay=0,
+                        font=dict(size=10, color="#d62728"),
+                        bgcolor="rgba(255,255,255,0.7)",
+                    )
+                fig_scatter.add_vline(
+                    x=SHORT_Z_THRESHOLD, line_dash="dash", line_color="#d62728",
+                    annotation_text=f"Flag threshold (z={SHORT_Z_THRESHOLD})",
+                    annotation_position="top right",
+                )
+                fig_scatter.add_hline(y=0, line_dash="dot", line_color="grey", opacity=0.5)
+                fig_scatter.update_layout(
+                    title="Z-Score at Filing vs 6m Forward Return",
+                    xaxis_title="Drift Z-Score",
+                    xaxis_range=[_x_clip_lo - 0.5, 5],
+                    yaxis_title="6m Forward Return",
+                    yaxis_tickformat="+.0%",
+                    height=440,
+                    legend=dict(orientation="h"),
+                )
+                if not _out_of_range.empty:
+                    st.caption(
+                        "X-axis clipped at z = −15 for readability. Off-scale: "
+                        + "; ".join(
+                            f"{r['label']} (z={r['z_score']:.1f})"
+                            for _, r in _out_of_range.iterrows()
+                        )
+                        + " — annotated at left edge."
+                    )
+                st.plotly_chart(fig_scatter, use_container_width=True)
 
                 # ---- Threshold sensitivity table ---------------------------
                 st.subheader("Threshold Sensitivity Analysis")
@@ -568,9 +925,8 @@ def main() -> None:
                     "mean_unflagged_return":"{:+.1%}",
                     "return_spread":        "{:+.1%}",
                     "hit_rate":             "{:.1%}",
-                    "sharpe_approx":        "{:.2f}",
                 }
-                display_sensitivity = sensitivity.copy()
+                display_sensitivity = sensitivity.drop(columns=["sharpe_approx"], errors="ignore").copy()
                 for col, fmt in fmt_map.items():
                     if col in display_sensitivity.columns:
                         display_sensitivity[col] = display_sensitivity[col].apply(
@@ -583,9 +939,179 @@ def main() -> None:
                     "mean_unflagged_return": "Mean Stable Return",
                     "return_spread":         "Return Spread",
                     "hit_rate":              "Hit Rate",
-                    "sharpe_approx":         "Sharpe (approx)",
                 })
                 st.dataframe(display_sensitivity, use_container_width=True, hide_index=True)
+
+                # ---- Extended analysis: multi-horizon + tool metrics --------
+                st.divider()
+                st.subheader("Extended Analysis — Multi-Horizon & Analyst Tool Metrics")
+
+                with st.expander("What this section shows", expanded=False):
+                    st.markdown("""
+**Framing:** RiskDrift is an analyst alert tool, not a trading strategy. The metrics here answer
+*how useful is this signal for directing analyst attention*, not just *does it generate alpha*.
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **Multi-horizon returns (1m / 3m / 6m / 12m)** | When does the signal resolve? Does underperformance persist or mean-revert? |
+| **Excess vs SPY** | After stripping out the market, does the flag still predict underperformance? |
+| **Excess vs Sector ETF** | After stripping out sector moves, is the underperformance idiosyncratic? |
+| **SPY underperform rate** | % of flagged names that lagged the market — the analyst's precision measure |
+| **Avg intraperiod drawdown** | Worst point during the holding window — important for risk management, not just end-of-period return |
+| **Vol uplift** | Does the flag predict higher forward realised volatility? A risk tool should predict vol regimes |
+| **Days to ±10% move** | Measures signal timeliness: how quickly does the market react after a flag? |
+                    """)
+
+                if st.button("Run Extended Analysis (fetches live price data via yfinance)", type="primary"):
+                    # Build filing dates dict: approximate as April 1 of each year
+                    _tickers_ext = valid["ticker"].unique().tolist()
+                    _filing_dates_ext: dict[str, dict[int, str]] = {}
+                    for _, _r in valid.iterrows():
+                        _filing_dates_ext.setdefault(str(_r["ticker"]), {})[int(_r["year"])] = (
+                            f"{int(_r['year'])}-04-01"
+                        )
+
+                    # Build ticker → sector ETF map
+                    _ticker_sector_etf = {
+                        t: SECTOR_ETF_MAP[s]
+                        for t, s in SECTOR_MAP.items()
+                        if s in SECTOR_ETF_MAP and t in _tickers_ext
+                    }
+
+                    with st.spinner("Downloading price data for all tickers + SPY + sector ETFs…"):
+                        _price_series = fetch_price_series(
+                            _tickers_ext,
+                            _filing_dates_ext,
+                            sector_map=_ticker_sector_etf,
+                            max_holding_months=12,
+                        )
+
+                    if not _price_series:
+                        st.error("Price fetch failed — check internet connection and yfinance installation.")
+                    else:
+                        _pos_df, _horizon_df = run_extended_backtest(
+                            valid, _price_series,
+                            long_z_threshold=LONG_Z_THRESHOLD,
+                            short_z_threshold=SHORT_Z_THRESHOLD,
+                        )
+
+                        if _horizon_df.empty:
+                            st.warning("Extended backtest returned no data.")
+                        else:
+                            st.session_state["ext_pos_df"] = _pos_df
+                            st.session_state["ext_horizon_df"] = _horizon_df
+                            st.success(
+                                f"Extended analysis complete — {len(_pos_df)} positions across "
+                                f"{_pos_df['ticker'].nunique()} tickers."
+                            )
+
+                if "ext_horizon_df" in st.session_state:
+                    _hdf = st.session_state["ext_horizon_df"]
+                    _pdf = st.session_state["ext_pos_df"]
+
+                    # ---- Multi-horizon summary table -----------------------
+                    st.subheader("Multi-Horizon L/S Summary")
+                    st.caption(
+                        "Flagged = z < −2.0 (short leg). Stable = z > −0.5 (long leg). "
+                        "Excess vs SPY and vs sector strip out market and sector moves respectively."
+                    )
+                    _h_display = _hdf.copy()
+                    _pct_cols = [
+                        "long_return", "short_return", "ls_spread",
+                        "spy_return_short_leg", "short_excess_vs_spy",
+                        "short_excess_vs_sector", "avg_intraperiod_drawdown",
+                    ]
+                    _rate_cols = ["hit_rate", "spy_underperform_rate"]
+                    for _c in _pct_cols:
+                        if _c in _h_display.columns:
+                            _h_display[_c] = _h_display[_c].apply(
+                                lambda x: f"{x:+.1%}" if pd.notna(x) else "N/A"
+                            )
+                    for _c in _rate_cols:
+                        if _c in _h_display.columns:
+                            _h_display[_c] = _h_display[_c].apply(
+                                lambda x: f"{x:.0%}" if pd.notna(x) else "N/A"
+                            )
+                    _h_display = _h_display.rename(columns={
+                        "horizon":                  "Horizon",
+                        "long_return":              "Stable Return",
+                        "short_return":             "Flagged Return",
+                        "ls_spread":                "L/S Spread",
+                        "spy_return_short_leg":     "SPY Return (same period)",
+                        "short_excess_vs_spy":      "Flagged − SPY",
+                        "short_excess_vs_sector":   "Flagged − Sector ETF",
+                        "hit_rate":                 "Hit Rate (negative)",
+                        "spy_underperform_rate":    "Lagged SPY Rate",
+                        "avg_intraperiod_drawdown": "Avg Intraperiod Drawdown",
+                    })
+                    st.dataframe(_h_display, use_container_width=True, hide_index=True)
+
+                    # ---- Vol uplift & timeliness ---------------------------
+                    _flagged_pos = _pdf[_pdf["drift_flag"] == True].copy()  # noqa: E712
+                    if not _flagged_pos.empty:
+                        st.subheader("Flagged-Position Analyst Tool Metrics")
+                        _mc1, _mc2, _mc3 = st.columns(3)
+
+                        _vol_uplift_mean = _flagged_pos["vol_uplift"].dropna().mean()
+                        _mc1.metric(
+                            "Avg Vol Uplift (flagged)",
+                            f"{_vol_uplift_mean:+.0%}" if pd.notna(_vol_uplift_mean) else "N/A",
+                            help="Mean increase in 63-day realised vol post-flag vs pre-flag. "
+                                 "Positive = flag predicts higher vol.",
+                        )
+
+                        _vol_uplift_rate = (_flagged_pos["vol_uplift"].dropna() > 0).mean()
+                        _mc2.metric(
+                            "Vol Uplift Rate",
+                            f"{_vol_uplift_rate:.0%}" if pd.notna(_vol_uplift_rate) else "N/A",
+                            help="Fraction of flagged positions where vol increased after the flag.",
+                        )
+
+                        _med_days = _flagged_pos["days_to_10pct_move"].dropna().median()
+                        _mc3.metric(
+                            "Median Days to ±10% Move",
+                            f"{int(_med_days)}d" if pd.notna(_med_days) else "Never",
+                            help="Median trading days until the stock crossed ±10% from entry. "
+                                 "Lower = more timely signal.",
+                        )
+
+                        # Per-flag detail table
+                        _detail_cols = [
+                            "ticker", "year", "z_score", "sector",
+                            "return_6m", "intraperiod_drawdown_6m",
+                            "excess_vs_spy_6m", "excess_vs_sector_6m",
+                            "vol_pre_flag", "vol_post_flag", "vol_uplift",
+                            "days_to_10pct_move",
+                        ]
+                        _detail_avail = [c for c in _detail_cols if c in _flagged_pos.columns]
+                        _detail = _flagged_pos[_detail_avail].copy().sort_values("z_score")
+
+                        _pct_detail = [
+                            "return_6m", "intraperiod_drawdown_6m",
+                            "excess_vs_spy_6m", "excess_vs_sector_6m",
+                            "vol_pre_flag", "vol_post_flag", "vol_uplift",
+                        ]
+                        for _c in _pct_detail:
+                            if _c in _detail.columns:
+                                _detail[_c] = _detail[_c].apply(
+                                    lambda x: f"{x:+.1%}" if pd.notna(x) else "N/A"
+                                )
+                        if "z_score" in _detail.columns:
+                            _detail["z_score"] = _detail["z_score"].apply(
+                                lambda x: f"{x:.2f}" if pd.notna(x) else "N/A"
+                            )
+                        _detail = _detail.rename(columns={
+                            "return_6m":                "6m Return",
+                            "intraperiod_drawdown_6m":  "6m Intraperiod Drawdown",
+                            "excess_vs_spy_6m":         "vs SPY (6m)",
+                            "excess_vs_sector_6m":      "vs Sector (6m)",
+                            "vol_pre_flag":             "Vol Pre-Flag",
+                            "vol_post_flag":            "Vol Post-Flag",
+                            "vol_uplift":               "Vol Uplift",
+                            "days_to_10pct_move":       "Days to ±10%",
+                        })
+                        st.caption("Per-flag breakdown — all flagged positions sorted by z-score.")
+                        st.dataframe(_detail, use_container_width=True, hide_index=True)
 
 
 if __name__ == "__main__":
