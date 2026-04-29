@@ -1,6 +1,6 @@
 # RiskDrift: System Architecture Diagram
 
-This diagram visualizes the end-to-end data flow and component relationships within the RiskDrift pipeline. It is ideal for inclusion in your presentation slides to show technical rigor.
+This diagram visualizes the end-to-end data flow and component relationships within the RiskDrift pipeline.
 
 ```mermaid
 graph TD
