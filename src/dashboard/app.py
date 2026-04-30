@@ -678,11 +678,11 @@ def main() -> None:
         # ---- 2. Use cases --------------------------------------------------
         st.subheader("Signal Applications by Stakeholder")
         _uc1, _uc2, _uc3, _uc4, _uc5 = st.columns(5)
-        _uc1.markdown("** Equity Analyst**\n\nPriority watchlist for earnings calls, sell-side coverage, and fundamental review after a language shift.")
-        _uc2.markdown("** Credit Analyst**\n\nEarly warning before covenant stress — language shifts often precede CDS spread widening and rating actions.")
-        _uc3.markdown("** ESG Screener**\n\nFlags material changes in environmental, social, or governance risk language for engagement or exclusion decisions.")
-        _uc4.markdown("** Academic / Quant**\n\nNLP-based factor for cross-sectional return studies, earnings surprise prediction, or textual analysis benchmarks.")
-        _uc5.markdown("** Retail Investor**\n\nSimple alert: *'this company's risk profile changed significantly — read before buying or holding.'*")
+        _uc1.markdown("Equity Analyst**\n\nPriority watchlist for earnings calls, sell-side coverage, and fundamental review after a language shift.")
+        _uc2.markdown("Credit Analyst**\n\nEarly warning before covenant stress — language shifts often precede CDS spread widening and rating actions.")
+        _uc3.markdown("ESG Screener**\n\nFlags material changes in environmental, social, or governance risk language for engagement or exclusion decisions.")
+        _uc4.markdown("Academic / Quant**\n\nNLP-based factor for cross-sectional return studies, earnings surprise prediction, or textual analysis benchmarks.")
+        _uc5.markdown("Retail Investor**\n\nSimple alert: *'this company's risk profile changed significantly — read before buying or holding.")
 
         st.divider()
 
