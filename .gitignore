@@ -46,6 +46,8 @@ Thumbs.db
 # Internal/working docs
 docs/mentor_email.txt
 docs/handover.md
+docs/mentor_call_prep.md
+CLAUDE.md
 
 # Claude Code session files
 .claude/
